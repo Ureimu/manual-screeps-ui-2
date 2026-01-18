@@ -1,94 +1,94 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useAppStore } from '@/stores/app'
+import { ref, computed, onMounted } from "vue";
+import { useAppStore } from "@/stores/app";
 
 // 导入子组件
-import ProgressIndicator from '@/components/ProgressIndicator.vue'
-import TextContainer from '@/components/TextContainer.vue'
-import FlexibleLineChart from '@/components/echarts/FlexibleLineChart.vue'
-import ComparableLineChart from '@/components/echarts/ComparableLineChart.vue'
-import SunBurstResourceChart from '@/components/echarts/SunBurstResourceChart.vue'
+import ProgressIndicator from "@/components/ProgressIndicator.vue";
+import TextContainer from "@/components/TextContainer.vue";
+import FlexibleLineChart from "@/components/echarts/FlexibleLineChart.vue";
+import ComparableLineChart from "@/components/echarts/ComparableLineChart.vue";
+import SunBurstResourceChart from "@/components/echarts/SunBurstResourceChart.vue";
 
 // Pinia store
-const appStore = useAppStore()
+const appStore = useAppStore();
 
 // 本地状态
-const screepsData = computed(() => appStore.screepsData)
-const axisType = computed(() => appStore.options.axisType)
+const screepsData = computed(() => appStore.screepsData);
+const axisType = computed(() => appStore.options.axisType);
 // const isLoading = computed(() => appStore.loading)
-const containerRef = ref<HTMLDivElement | null>(null)
+const containerRef = ref<HTMLDivElement | null>(null);
 
 // 房间选择
-const selectedRoom = ref<string | null>(null)
+const selectedRoom = ref<string | null>(null);
 const availableRooms = computed(() => {
-    if (!screepsData.value) return []
-    return Object.keys(screepsData.value.roomData || {})
-})
+    if (!screepsData.value) return [];
+    return Object.keys(screepsData.value.roomData || {});
+});
 
 const currentRoomName = computed(() => {
     if (selectedRoom.value) {
-        return selectedRoom.value
+        return selectedRoom.value;
     }
     if (availableRooms.value.length > 0) {
-        return availableRooms.value[0]
+        return availableRooms.value[0];
     }
-    return null as string | null
-})
+    return null as string | null;
+});
 
 // 当有数据时自动选择第一个房间
 onMounted(() => {
     if (availableRooms.value.length > 0 && !selectedRoom.value) {
-        selectedRoom.value = availableRooms.value[0] || null
+        selectedRoom.value = availableRooms.value[0] || null;
     }
-})
+});
 
 // 时间格式化工具
 function formatTime(time: number): string {
-    const addZero = (n: number): string => (n < 10 ? `0${n}` : `${n}`)
-    const date = new Date(time)
-    return `${date.getFullYear()}-${addZero(date.getMonth() + 1)}-${addZero(date.getDate())},${addZero(date.getHours())}:${addZero(date.getMinutes())}:${addZero(date.getSeconds())}`
+    const addZero = (n: number): string => (n < 10 ? `0${n}` : `${n}`);
+    const date = new Date(time);
+    return `${date.getFullYear()}-${addZero(date.getMonth() + 1)}-${addZero(date.getDate())},${addZero(date.getHours())}:${addZero(date.getMinutes())}:${addZero(date.getSeconds())}`;
 }
 
 // 计算用户信息数组
 const userInfoMessages = computed(() => {
-    if (!screepsData.value?.userData) return []
-    const { userData, timeData, shardData } = screepsData.value
+    if (!screepsData.value?.userData) return [];
+    const { userData, timeData, shardData } = screepsData.value;
     return [
         `玩家名称: ${userData.name}`,
         `当前 Tick: ${timeData.tick}`,
         `游戏时间: ${formatTime(timeData.time)}`,
-        `所属分片: ${shardData.shardName}`,
-    ]
-})
+        `所属分片: ${shardData.shardName}`
+    ];
+});
 
 // 计算房间信息数组
 const roomInfoMessages = computed(() => {
-    if (!screepsData.value?.roomData || !currentRoomName.value) return []
-    const room = screepsData.value.roomData[currentRoomName.value]
-    if (!room) return []
+    if (!screepsData.value?.roomData || !currentRoomName.value) return [];
+    const room = screepsData.value.roomData[currentRoomName.value];
+    if (!room) return [];
     return [
         `房间名称: ${room.name}`,
         `爬虫数量: ${room.creep?.num || 0}`,
         `控制器等级: ${room.controller?.level || 0}`,
-        `升级速度: ${room.controller?.progressSpeed || 'N/A'} /tick`,
-    ]
-})
+        `升级速度: ${room.controller?.progressSpeed || "N/A"} /tick`
+    ];
+});
 
 // 获取外矿能量数据
 const outwardsSourceData = computed(() => {
-    if (!screepsData.value?.timeSeriesData || !currentRoomName.value) return []
-    const roomData = screepsData.value.timeSeriesData.roomData?.[currentRoomName.value]
-    if (!roomData?.outwardsSourceEnergy) return []
+    if (!screepsData.value?.timeSeriesData || !currentRoomName.value) return [];
+    const roomData = screepsData.value.timeSeriesData.roomData?.[currentRoomName.value];
+    if (!roomData?.outwardsSourceEnergy) return [];
 
     return Object.entries(roomData.outwardsSourceEnergy).map(([name, data]) => ({
         name,
-        data: Array.isArray(data.data) ? data.data : [],
-    }))
-})
+        data: Array.isArray(data.data) ? data.data : []
+    }));
+});
 
 // 切换坐标轴类型
 function toggleAxisType(): void {
-    appStore.setAxisType(axisType.value === 'time' ? 'tick' : 'time')
+    appStore.setAxisType(axisType.value === "time" ? "tick" : "time");
 }
 </script>
 
@@ -101,7 +101,7 @@ function toggleAxisType(): void {
                     <h1>📊 Screeps 数据展示面板</h1>
                     <div class="header-controls">
                         <el-button @click="toggleAxisType" type="primary" size="small">
-                            切换轴: {{ axisType === 'time' ? '时间' : 'Tick' }}
+                            切换轴: {{ axisType === "time" ? "时间" : "Tick" }}
                         </el-button>
                         <el-select
                             v-if="availableRooms.length > 0"
@@ -110,12 +110,7 @@ function toggleAxisType(): void {
                             size="small"
                             style="width: 150px"
                         >
-                            <el-option
-                                v-for="room in availableRooms"
-                                :key="room"
-                                :label="room"
-                                :value="room"
-                            />
+                            <el-option v-for="room in availableRooms" :key="room" :label="room" :value="room" />
                         </el-select>
                     </div>
                 </div>
@@ -124,7 +119,7 @@ function toggleAxisType(): void {
 
         <div v-if="screepsData" class="panel-main">
             <!-- 第一行：用户信息和房间信息 -->
-            <el-row :gutter="[24, 24]" class="row-container">
+            <el-row :gutter="24" class="row-container">
                 <el-col :xs="24" :sm="12" :md="8" :lg="6">
                     <TextContainer title="用户信息" :msg="userInfoMessages" />
                 </el-col>
@@ -134,29 +129,17 @@ function toggleAxisType(): void {
             </el-row>
 
             <!-- 第二行：用户等级进度条 -->
-            <el-row :gutter="[24, 24]" class="row-container">
+            <el-row :gutter="24" class="row-container">
                 <el-col :xs="24" :sm="12" :md="8" :lg="6">
-                    <ProgressIndicator
-                        msg="GCL"
-                        :levelData="screepsData.userData.gcl"
-                        :isFull="false"
-                    />
+                    <ProgressIndicator msg="GCL" :levelData="screepsData.userData.gcl" :isFull="false" />
                 </el-col>
                 <el-col :xs="24" :sm="12" :md="8" :lg="6">
-                    <ProgressIndicator
-                        msg="GPL"
-                        :levelData="screepsData.userData.gpl"
-                        :isFull="false"
-                    />
+                    <ProgressIndicator msg="GPL" :levelData="screepsData.userData.gpl" :isFull="false" />
                 </el-col>
             </el-row>
 
             <!-- 第三行：房间控制器等级 -->
-            <el-row
-                v-if="currentRoomName && screepsData.roomData[currentRoomName]"
-                :gutter="[24, 24]"
-                class="row-container"
-            >
+            <el-row v-if="currentRoomName && screepsData.roomData[currentRoomName]" :gutter="24" class="row-container">
                 <el-col :xs="24" :sm="12" :md="8" :lg="6">
                     <ProgressIndicator
                         msg="RCL"
@@ -167,7 +150,7 @@ function toggleAxisType(): void {
             </el-row>
 
             <!-- 第四行：用户数据折线图 -->
-            <el-row :gutter="[24, 24]" class="row-container">
+            <el-row :gutter="24" class="row-container">
                 <el-col :xs="24" :sm="24" :md="12" :lg="12">
                     <FlexibleLineChart
                         id="credits-chart"
@@ -191,7 +174,7 @@ function toggleAxisType(): void {
             </el-row>
 
             <!-- 第五行：GCL 和 GPL 进度折线图 -->
-            <el-row :gutter="[24, 24]" class="row-container">
+            <el-row :gutter="24" class="row-container">
                 <el-col :xs="24" :sm="24" :md="12" :lg="12">
                     <FlexibleLineChart
                         id="gcl-progress-chart"
@@ -215,17 +198,14 @@ function toggleAxisType(): void {
             </el-row>
 
             <!-- 第六行：房间控制器进度和能量存储 -->
-            <el-row v-if="currentRoomName" :gutter="[24, 24]" class="row-container">
+            <el-row v-if="currentRoomName" :gutter="24" class="row-container">
                 <el-col :xs="24" :sm="24" :md="12" :lg="12">
                     <FlexibleLineChart
                         id="controller-progress-chart"
                         name="控制器升级进度"
                         :timeData="screepsData.timeSeriesData?.timeStamp?.data"
                         :gameTimeData="screepsData.timeSeriesData?.gameTime?.data"
-                        :yData="
-                            screepsData.timeSeriesData?.roomData?.[currentRoomName]
-                                ?.controllerProgress?.data
-                        "
+                        :yData="screepsData.timeSeriesData?.roomData?.[currentRoomName]?.controllerProgress?.data"
                         :visible="true"
                     />
                 </el-col>
@@ -235,21 +215,14 @@ function toggleAxisType(): void {
                         name="能量存储"
                         :timeData="screepsData.timeSeriesData?.timeStamp?.data"
                         :gameTimeData="screepsData.timeSeriesData?.gameTime?.data"
-                        :yData="
-                            screepsData.timeSeriesData?.roomData?.[currentRoomName]?.storageData
-                                ?.energy?.data
-                        "
+                        :yData="screepsData.timeSeriesData?.roomData?.[currentRoomName]?.storageData?.energy?.data"
                         :visible="true"
                     />
                 </el-col>
             </el-row>
 
             <!-- 第七行：外矿能量对比图 -->
-            <el-row
-                v-if="currentRoomName && outwardsSourceData.length > 0"
-                :gutter="[24, 24]"
-                class="row-container"
-            >
+            <el-row v-if="currentRoomName && outwardsSourceData.length > 0" :gutter="24" class="row-container">
                 <el-col :xs="24" :sm="24" :md="24" :lg="24">
                     <ComparableLineChart
                         id="outwards-source-chart"
@@ -263,7 +236,7 @@ function toggleAxisType(): void {
             </el-row>
 
             <!-- 第八行：资源分布图 -->
-            <el-row v-if="currentRoomName" :gutter="[24, 24]" class="row-container">
+            <el-row v-if="currentRoomName" :gutter="24" class="row-container">
                 <el-col :xs="24" :sm="24" :md="12" :lg="12">
                     <SunBurstResourceChart
                         id="resource-chart"

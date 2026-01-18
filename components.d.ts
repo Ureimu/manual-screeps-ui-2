@@ -24,6 +24,7 @@ declare module 'vue' {
     ProgressIndicator: typeof import('./src/components/ProgressIndicator.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    SunBrustResourceChart: typeof import('./src/components/echarts/SunBrustResourceChart.vue')['default']
     SunBurstResourceChart: typeof import('./src/components/echarts/SunBurstResourceChart.vue')['default']
     TextContainer: typeof import('./src/components/TextContainer.vue')['default']
   }
@@ -43,6 +44,7 @@ declare global {
   const ProgressIndicator: typeof import('./src/components/ProgressIndicator.vue')['default']
   const RouterLink: typeof import('vue-router')['RouterLink']
   const RouterView: typeof import('vue-router')['RouterView']
+  const SunBrustResourceChart: typeof import('./src/components/echarts/SunBrustResourceChart.vue')['default']
   const SunBurstResourceChart: typeof import('./src/components/echarts/SunBurstResourceChart.vue')['default']
   const TextContainer: typeof import('./src/components/TextContainer.vue')['default']
 }
