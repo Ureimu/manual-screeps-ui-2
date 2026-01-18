@@ -5,9 +5,11 @@ import { createPinia } from 'pinia'
 import { decode } from 'js-base64'
 
 import ElementPlus from 'element-plus'
+import 'element-plus/dist/index.css'
 
 import App from './App.vue'
 import router from './router'
+import { useAppStore } from './stores/app'
 import type { OriginScreepsData } from './type/origin'
 import { testData } from './data'
 
@@ -18,11 +20,10 @@ import { testData } from './data'
  */
 function runRender(data: OriginScreepsData): void {
     console.log('开始渲染数据:', data)
-    // TODO: 在这里实现具体的渲染逻辑
-    // 例如：更新Pinia store、更新Vue组件等
     try {
-        // 这里可以调用相关的store或其他渲染函数
-        console.log('数据渲染完成')
+        const appStore = useAppStore()
+        appStore.setScreepsData(data)
+        console.log('数据已更新到 Pinia store')
     } catch (error) {
         console.error('渲染过程中出错:', error)
         throw error
@@ -30,9 +31,10 @@ function runRender(data: OriginScreepsData): void {
 }
 
 // ==================== 初始化应用 ====================
+const pinia = createPinia()
 const vueApp: VueApp<Element> = createApp(App)
 
-vueApp.use(createPinia())
+vueApp.use(pinia)
 vueApp.use(router)
 vueApp.use(ElementPlus, { size: 'small', zIndex: 3000 })
 vueApp.mount('#app')
