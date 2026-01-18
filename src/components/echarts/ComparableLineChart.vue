@@ -245,7 +245,6 @@ onMounted(() => {
 
     // 处理窗口resize
     const handleResize = () => {
-        initChart();
         chartInstance?.resize();
     };
     window.addEventListener("resize", handleResize);
