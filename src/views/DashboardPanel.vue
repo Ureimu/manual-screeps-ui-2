@@ -68,7 +68,7 @@ const roomInfoMessages = computed(() => {
     if (!room) return [];
     return [
         `房间名称: ${room.name}`,
-        `爬虫数量: ${room.creep?.num || 0}`,
+        `爬虫数量: ${Object.keys(room.spawnPool).length || 0}`,
         `控制器等级: ${room.controller?.level || 0}`,
         `升级速度: ${room.controller?.progressSpeed || "N/A"} /tick`
     ];
@@ -118,23 +118,84 @@ function toggleAxisType(): void {
         </el-card>
 
         <div v-if="screepsData" class="panel-main">
-            <!-- 第一行：用户信息和房间信息 -->
+            <div v-if="screepsData.userData">
+                <el-card>
+                    <h2>全局信息</h2>
+                </el-card>
+
+                <!-- 第一行：用户信息和房间信息 -->
+                <el-row :gutter="24" class="row-container">
+                    <el-col :xs="24" :sm="12" :md="8" :lg="6">
+                        <TextContainer title="用户信息" :msg="userInfoMessages" />
+                    </el-col>
+                </el-row>
+
+                <!-- 第二行：用户等级进度条 -->
+                <el-row :gutter="24" class="row-container">
+                    <el-col :xs="24" :sm="12" :md="8" :lg="6">
+                        <ProgressIndicator msg="GCL" :levelData="screepsData.userData.gcl" :isFull="false" />
+                    </el-col>
+                    <el-col :xs="24" :sm="12" :md="8" :lg="6">
+                        <ProgressIndicator msg="GPL" :levelData="screepsData.userData.gpl" :isFull="false" />
+                    </el-col>
+                </el-row>
+
+                <!-- 第四行：用户数据折线图 -->
+                <el-row :gutter="24" class="row-container">
+                    <el-col :xs="24" :sm="24" :md="12" :lg="12">
+                        <FlexibleLineChart
+                            id="credits-chart"
+                            name="Credits"
+                            :timeData="screepsData.timeSeriesData?.timeStamp?.data"
+                            :gameTimeData="screepsData.timeSeriesData?.gameTime?.data"
+                            :yData="screepsData.timeSeriesData?.userData?.credits?.data"
+                            :visible="true"
+                        />
+                    </el-col>
+                    <el-col :xs="24" :sm="24" :md="12" :lg="12">
+                        <FlexibleLineChart
+                            id="pixels-chart"
+                            name="Pixels"
+                            :timeData="screepsData.timeSeriesData?.timeStamp?.data"
+                            :gameTimeData="screepsData.timeSeriesData?.gameTime?.data"
+                            :yData="screepsData.timeSeriesData?.userData?.pixels?.data"
+                            :visible="true"
+                        />
+                    </el-col>
+                </el-row>
+
+                <!-- 第五行：GCL 和 GPL 进度折线图 -->
+                <el-row :gutter="24" class="row-container">
+                    <el-col :xs="24" :sm="24" :md="12" :lg="12">
+                        <FlexibleLineChart
+                            id="gcl-progress-chart"
+                            name="GCL 进度"
+                            :timeData="screepsData.timeSeriesData?.timeStamp?.data"
+                            :gameTimeData="screepsData.timeSeriesData?.gameTime?.data"
+                            :yData="screepsData.timeSeriesData?.userData?.gclProgress?.data"
+                            :visible="true"
+                        />
+                    </el-col>
+                    <el-col :xs="24" :sm="24" :md="12" :lg="12">
+                        <FlexibleLineChart
+                            id="gpl-progress-chart"
+                            name="GPL 进度"
+                            :timeData="screepsData.timeSeriesData?.timeStamp?.data"
+                            :gameTimeData="screepsData.timeSeriesData?.gameTime?.data"
+                            :yData="screepsData.timeSeriesData?.userData?.gplProgress?.data"
+                            :visible="true"
+                        />
+                    </el-col>
+                </el-row>
+            </div>
+
+            <el-card>
+                <h2>{{ currentRoomName }}房间信息</h2>
+            </el-card>
+
             <el-row :gutter="24" class="row-container">
-                <el-col :xs="24" :sm="12" :md="8" :lg="6">
-                    <TextContainer title="用户信息" :msg="userInfoMessages" />
-                </el-col>
                 <el-col :xs="24" :sm="12" :md="8" :lg="6">
                     <TextContainer title="房间信息" :msg="roomInfoMessages" />
-                </el-col>
-            </el-row>
-
-            <!-- 第二行：用户等级进度条 -->
-            <el-row :gutter="24" class="row-container">
-                <el-col :xs="24" :sm="12" :md="8" :lg="6">
-                    <ProgressIndicator msg="GCL" :levelData="screepsData.userData.gcl" :isFull="false" />
-                </el-col>
-                <el-col :xs="24" :sm="12" :md="8" :lg="6">
-                    <ProgressIndicator msg="GPL" :levelData="screepsData.userData.gpl" :isFull="false" />
                 </el-col>
             </el-row>
 
@@ -145,54 +206,6 @@ function toggleAxisType(): void {
                         msg="RCL"
                         :levelData="screepsData.roomData[currentRoomName]?.controller || null"
                         :isFull="false"
-                    />
-                </el-col>
-            </el-row>
-
-            <!-- 第四行：用户数据折线图 -->
-            <el-row :gutter="24" class="row-container">
-                <el-col :xs="24" :sm="24" :md="12" :lg="12">
-                    <FlexibleLineChart
-                        id="credits-chart"
-                        name="Credits (积分)"
-                        :timeData="screepsData.timeSeriesData?.timeStamp?.data"
-                        :gameTimeData="screepsData.timeSeriesData?.gameTime?.data"
-                        :yData="screepsData.timeSeriesData?.userData?.credits?.data"
-                        :visible="true"
-                    />
-                </el-col>
-                <el-col :xs="24" :sm="24" :md="12" :lg="12">
-                    <FlexibleLineChart
-                        id="pixels-chart"
-                        name="Pixels (像素)"
-                        :timeData="screepsData.timeSeriesData?.timeStamp?.data"
-                        :gameTimeData="screepsData.timeSeriesData?.gameTime?.data"
-                        :yData="screepsData.timeSeriesData?.userData?.pixels?.data"
-                        :visible="true"
-                    />
-                </el-col>
-            </el-row>
-
-            <!-- 第五行：GCL 和 GPL 进度折线图 -->
-            <el-row :gutter="24" class="row-container">
-                <el-col :xs="24" :sm="24" :md="12" :lg="12">
-                    <FlexibleLineChart
-                        id="gcl-progress-chart"
-                        name="GCL 进度"
-                        :timeData="screepsData.timeSeriesData?.timeStamp?.data"
-                        :gameTimeData="screepsData.timeSeriesData?.gameTime?.data"
-                        :yData="screepsData.timeSeriesData?.userData?.gclProgress?.data"
-                        :visible="true"
-                    />
-                </el-col>
-                <el-col :xs="24" :sm="24" :md="12" :lg="12">
-                    <FlexibleLineChart
-                        id="gpl-progress-chart"
-                        name="GPL 进度"
-                        :timeData="screepsData.timeSeriesData?.timeStamp?.data"
-                        :gameTimeData="screepsData.timeSeriesData?.gameTime?.data"
-                        :yData="screepsData.timeSeriesData?.userData?.gplProgress?.data"
-                        :visible="true"
                     />
                 </el-col>
             </el-row>
