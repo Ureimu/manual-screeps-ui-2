@@ -1,4 +1,5 @@
 export interface OriginScreepsData {
+    type: "OriginScreepsData";
     timeSeriesData: FrameStats<number[]> & {
         timeStamp: SingleData<number[]>;
         gameTime: SingleData<number[]>;

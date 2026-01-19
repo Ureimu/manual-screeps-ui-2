@@ -60,15 +60,22 @@ if (isDevelopment) {
     window.addEventListener("message", ({ data }) => {
         try {
             fullData = data;
+
             console.log("收到游戏数据:", fullData);
 
             if (typeof fullData === "string") {
                 // 如果数据是字符串，尝试进行Base64解码和JSON解析
                 const decodedData = decode(fullData);
                 const parsedData = JSON.parse(decodedData) as OriginScreepsData;
+                if (parsedData.type !== "OriginScreepsData") {
+                    return;
+                }
                 console.log("解码后的数据:", parsedData);
                 runRender(parsedData);
             } else {
+                if (fullData.type !== "OriginScreepsData") {
+                    return;
+                }
                 // 如果数据已经是对象，直接渲染
                 runRender(fullData);
             }

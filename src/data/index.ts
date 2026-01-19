@@ -36,6 +36,7 @@ const controllerProgressData2 = getRandomSumList(
 ).concat(getRandomSumList(0, 4000, length / 2, 5.9e6));
 const controllerProgressData = controllerProgressData1.concat(controllerProgressData2);
 export const testData: OriginScreepsData = {
+    type: "OriginScreepsData",
     timeSeriesData: {
         userData: {
             credits: {
