@@ -1,19 +1,19 @@
 <script setup lang="ts">
 interface Props {
-    title?: string
-    msg: Array<string | { label: string; value: string | number }>
+    title?: string;
+    msg: Array<string | { label: string; value: string | number }>;
 }
 
 withDefaults(defineProps<Props>(), {
-    title: 'Information',
-})
+    title: "Information",
+});
 
 const formatMessage = (item: string | { label: string; value: string | number }): string => {
-    if (typeof item === 'string') {
-        return item
+    if (typeof item === "string") {
+        return item;
     }
-    return `${item.label}: ${item.value}`
-}
+    return `${item.label}: ${item.value}`;
+};
 </script>
 
 <template>
@@ -73,8 +73,8 @@ const formatMessage = (item: string | { label: string; value: string | number })
     word-break: break-word;
     padding: 0.25rem 0;
     font-family:
-        -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif,
-        'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
+        -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif,
+        "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
 }
 
 .info-item:hover {

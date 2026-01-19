@@ -13,10 +13,16 @@ import { TooltipComponent } from "echarts/components";
 import { DataZoomComponent } from "echarts/components";
 import { TitleComponent } from "echarts/components";
 import { useAppStore } from "@/stores/app";
-import type { SingleData } from "@/type/origin";
 import { formatTime, numberFormatter } from "@/utils/formatters";
 
-echarts.use([GridComponent, LineChart, SVGRenderer, TooltipComponent, DataZoomComponent, TitleComponent]);
+echarts.use([
+    GridComponent,
+    LineChart,
+    SVGRenderer,
+    TooltipComponent,
+    DataZoomComponent,
+    TitleComponent,
+]);
 
 interface Props {
     name: string;
@@ -35,7 +41,7 @@ const props = withDefaults(defineProps<Props>(), {
     visible: true,
     timeData: () => [],
     gameTimeData: () => [],
-    yDataList: () => []
+    yDataList: () => [],
 });
 
 let chartInstance: echarts.ECharts | null = null;
@@ -49,24 +55,24 @@ function initChart(): void {
 
     if (!chartInstance) {
         chartInstance = echarts.init(chartContainer.value, null, {
-            renderer: "svg"
+            renderer: "svg",
         });
     }
     if (!props.yDataList) return;
 
-    const dataList = props.yDataList.map(entry => entry.data);
-    const nameList = props.yDataList.map(entry => entry.name);
+    const dataList = props.yDataList.map((entry) => entry.data);
+    const nameList = props.yDataList.map((entry) => entry.name);
 
     let fullDataList: [number, number][][];
 
     if (axisType.value === "time") {
-        fullDataList = dataList.map(value => {
+        fullDataList = dataList.map((value) => {
             return value.map((value2, index) => {
                 return [props.timeData[index] as number, value2];
             });
         });
     } else {
-        fullDataList = dataList.map(value => {
+        fullDataList = dataList.map((value) => {
             return value.map((value2, index) => {
                 return [props.gameTimeData[index] as number, value2];
             });
@@ -76,7 +82,7 @@ function initChart(): void {
     const neededData: Record<string, unknown> = {
         tickData: props.gameTimeData,
         timeData: props.timeData,
-        yData: props.yDataList
+        yData: props.yDataList,
     };
 
     for (const key in neededData) {
@@ -106,8 +112,8 @@ function initChart(): void {
             symbol: "none",
             data: fullData,
             lineStyle: {
-                width: 1.2
-            }
+                width: 1.2,
+            },
         });
     });
 
@@ -120,7 +126,7 @@ function initChart(): void {
             position: function () {
                 const obj: { top: number | string; left?: number; right?: number } = {
                     top: "-20%",
-                    left: 50
+                    left: 50,
                 };
                 return obj;
             },
@@ -132,7 +138,7 @@ function initChart(): void {
                     seriesName: string;
                     color: string;
                     marker: string;
-                }>
+                }>,
             ) => {
                 console.log(params);
                 let str = "";
@@ -147,12 +153,12 @@ function initChart(): void {
                     }
                 }
                 return str;
-            }
+            },
         },
         title: {
             text: props.name,
             top: "top",
-            left: "center"
+            left: "center",
         },
         xAxis: {},
         yAxis: [
@@ -161,45 +167,45 @@ function initChart(): void {
                 name: "value",
                 scale: true,
                 axisLabel: {
-                    formatter: numberFormatter
+                    formatter: numberFormatter,
                 },
                 splitLine: {
                     lineStyle: {
                         color: ["#16f"],
-                        opacity: 0.2
-                    }
-                }
-            }
+                        opacity: 0.2,
+                    },
+                },
+            },
         ],
         dataZoom: [
             {
                 show: true,
                 realtime: true,
                 start: 0,
-                end: 100
+                end: 100,
             },
             {
                 type: "inside",
                 realtime: true,
                 start: 25,
-                end: 85
-            }
+                end: 85,
+            },
         ],
-        series
+        series,
     };
 
     if (axisType.value === "time") {
         option.xAxis = {
             type: "time",
             axisLine: {
-                show: false
+                show: false,
             },
             axisTick: {
-                show: false
+                show: false,
             },
             splitLine: {
-                show: true
-            }
+                show: true,
+            },
         };
     } else {
         option.xAxis = {
@@ -207,14 +213,14 @@ function initChart(): void {
             min: "dataMin",
             max: "dataMax",
             axisLine: {
-                show: false
+                show: false,
             },
             axisTick: {
-                show: false
+                show: false,
             },
             splitLine: {
-                show: true
-            }
+                show: true,
+            },
         };
     }
 
@@ -234,7 +240,7 @@ watch(
             initChart();
         }
     },
-    { deep: true }
+    { deep: true },
 );
 
 // 生命周期钩子

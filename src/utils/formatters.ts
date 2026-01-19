@@ -4,9 +4,9 @@
  * @returns 格式化后的时间字符串 "YYYY-MM-DD,HH:MM:SS"
  */
 export function formatTime(time: number): string {
-  const addZero = (n: number): string => (n < 10 ? `0${n}` : `${n}`)
-  const date = new Date(time)
-  return `${date.getFullYear()}-${addZero(date.getMonth() + 1)}-${addZero(date.getDate())},${addZero(date.getHours())}:${addZero(date.getMinutes())}:${addZero(date.getSeconds())}`
+    const addZero = (n: number): string => (n < 10 ? `0${n}` : `${n}`);
+    const date = new Date(time);
+    return `${date.getFullYear()}-${addZero(date.getMonth() + 1)}-${addZero(date.getDate())},${addZero(date.getHours())}:${addZero(date.getMinutes())}:${addZero(date.getSeconds())}`;
 }
 
 /**
@@ -15,7 +15,7 @@ export function formatTime(time: number): string {
  * @returns 格式化后的 tick 字符串
  */
 export function formatTick(tick: number): string {
-  return `Tick: ${tick.toLocaleString()}`
+    return `Tick: ${tick.toLocaleString()}`;
 }
 
 /**
@@ -25,34 +25,33 @@ export function formatTick(tick: number): string {
  * @returns 格式化后的数字字符串
  */
 export function numberFormatter(value: number): string {
-  if (value === 0) return '0'
+    if (value === 0) return "0";
 
-  const absoluteValue = Math.abs(value)
-  const magnitude = Math.log10(absoluteValue)
+    const absoluteValue = Math.abs(value);
+    const magnitude = Math.log10(absoluteValue);
 
-  // 小于 1000，直接返回
-  if (magnitude < 3) {
-    return `${Math.round(absoluteValue)}`
-  }
+    // 小于 1000，直接返回
+    if (magnitude < 3) {
+        return `${Math.round(absoluteValue)}`;
+    }
 
-  const size = magnitude % 3
-  const magnitudeDivideKilo = magnitude - size
-  const levelMap: Record<number, string> = {
-    0: '',
-    3: 'k',
-    6: 'M',
-    9: 'B',
-    12: 'T',
-    15: 'P',
-    18: 'E',
-    21: 'Z',
-    24: 'Y'
-  }
+    const size = magnitude % 3;
+    const magnitudeDivideKilo = magnitude - size;
+    const levelMap: Record<number, string> = {
+        0: "",
+        3: "k",
+        6: "M",
+        9: "B",
+        12: "T",
+        15: "P",
+        18: "E",
+        21: "Z",
+        24: "Y",
+    };
 
-  const formatted = (absoluteValue / (10 ** magnitudeDivideKilo))
-    .toFixed(size >= 2 ? 0 : 1)
+    const formatted = (absoluteValue / 10 ** magnitudeDivideKilo).toFixed(size >= 2 ? 0 : 1);
 
-  return `${value >= 0 ? '' : '-'}${formatted}${levelMap[magnitudeDivideKilo] || ''}`
+    return `${value >= 0 ? "" : "-"}${formatted}${levelMap[magnitudeDivideKilo] || ""}`;
 }
 
 /**
@@ -62,9 +61,9 @@ export function numberFormatter(value: number): string {
  * @returns 百分比字符串
  */
 export function formatPercent(value: number, total: number): string {
-  if (total === 0) return '0%'
-  const percent = ((value / total) * 100).toFixed(2)
-  return `${percent}%`
+    if (total === 0) return "0%";
+    const percent = ((value / total) * 100).toFixed(2);
+    return `${percent}%`;
 }
 
 /**
@@ -73,7 +72,7 @@ export function formatPercent(value: number, total: number): string {
  * @returns 带逗号的数字字符串
  */
 export function formatWithCommas(value: number): string {
-  return value.toLocaleString()
+    return value.toLocaleString();
 }
 
 /**
@@ -83,9 +82,13 @@ export function formatWithCommas(value: number): string {
  * @param timeSpan 时间跨度（秒）
  * @returns 平均变化率
  */
-export function calculateAverageRate(startValue: number, endValue: number, timeSpan: number): number {
-  if (timeSpan === 0) return 0
-  return (endValue - startValue) / timeSpan
+export function calculateAverageRate(
+    startValue: number,
+    endValue: number,
+    timeSpan: number,
+): number {
+    if (timeSpan === 0) return 0;
+    return (endValue - startValue) / timeSpan;
 }
 
 /**
@@ -94,6 +97,6 @@ export function calculateAverageRate(startValue: number, endValue: number, timeS
  * @param unit 单位
  * @returns 格式化后的速率字符串
  */
-export function formatRate(rate: number, unit: string = '/s'): string {
-  return `${numberFormatter(rate)}${unit}`
+export function formatRate(rate: number, unit: string = "/s"): string {
+    return `${numberFormatter(rate)}${unit}`;
 }

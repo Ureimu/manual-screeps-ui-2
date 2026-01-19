@@ -57,7 +57,7 @@ const userInfoMessages = computed(() => {
         `玩家名称: ${userData.name}`,
         `当前 Tick: ${timeData.tick}`,
         `游戏时间: ${formatTime(timeData.time)}`,
-        `所属分片: ${shardData.shardName}`
+        `所属分片: ${shardData.shardName}`,
     ];
 });
 
@@ -70,7 +70,7 @@ const roomInfoMessages = computed(() => {
         `房间名称: ${room.name}`,
         `爬虫数量: ${Object.keys(room.spawnPool).length || 0}`,
         `控制器等级: ${room.controller?.level || 0}`,
-        `升级速度: ${room.controller?.progressSpeed || "N/A"} /tick`
+        `升级速度: ${room.controller?.progressSpeed || "N/A"} /tick`,
     ];
 });
 
@@ -82,7 +82,7 @@ const outwardsSourceData = computed(() => {
 
     return Object.entries(roomData.outwardsSourceEnergy).map(([name, data]) => ({
         name,
-        data: Array.isArray(data.data) ? data.data : []
+        data: Array.isArray(data.data) ? data.data : [],
     }));
 });
 
@@ -110,7 +110,12 @@ function toggleAxisType(): void {
                             size="small"
                             style="width: 150px"
                         >
-                            <el-option v-for="room in availableRooms" :key="room" :label="room" :value="room" />
+                            <el-option
+                                v-for="room in availableRooms"
+                                :key="room"
+                                :label="room"
+                                :value="room"
+                            />
                         </el-select>
                     </div>
                 </div>
@@ -133,10 +138,18 @@ function toggleAxisType(): void {
                 <!-- 第二行：用户等级进度条 -->
                 <el-row :gutter="24" class="row-container">
                     <el-col :xs="24" :sm="12" :md="8" :lg="6">
-                        <ProgressIndicator msg="GCL" :levelData="screepsData.userData.gcl" :isFull="false" />
+                        <ProgressIndicator
+                            msg="GCL"
+                            :levelData="screepsData.userData.gcl"
+                            :isFull="false"
+                        />
                     </el-col>
                     <el-col :xs="24" :sm="12" :md="8" :lg="6">
-                        <ProgressIndicator msg="GPL" :levelData="screepsData.userData.gpl" :isFull="false" />
+                        <ProgressIndicator
+                            msg="GPL"
+                            :levelData="screepsData.userData.gpl"
+                            :isFull="false"
+                        />
                     </el-col>
                 </el-row>
 
@@ -200,7 +213,11 @@ function toggleAxisType(): void {
             </el-row>
 
             <!-- 第三行：房间控制器等级 -->
-            <el-row v-if="currentRoomName && screepsData.roomData[currentRoomName]" :gutter="24" class="row-container">
+            <el-row
+                v-if="currentRoomName && screepsData.roomData[currentRoomName]"
+                :gutter="24"
+                class="row-container"
+            >
                 <el-col :xs="24" :sm="12" :md="8" :lg="6">
                     <ProgressIndicator
                         msg="RCL"
@@ -218,7 +235,10 @@ function toggleAxisType(): void {
                         name="控制器升级进度"
                         :timeData="screepsData.timeSeriesData?.timeStamp?.data"
                         :gameTimeData="screepsData.timeSeriesData?.gameTime?.data"
-                        :yData="screepsData.timeSeriesData?.roomData?.[currentRoomName]?.controllerProgress?.data"
+                        :yData="
+                            screepsData.timeSeriesData?.roomData?.[currentRoomName]
+                                ?.controllerProgress?.data
+                        "
                         :visible="true"
                     />
                 </el-col>
@@ -228,14 +248,21 @@ function toggleAxisType(): void {
                         name="能量存储"
                         :timeData="screepsData.timeSeriesData?.timeStamp?.data"
                         :gameTimeData="screepsData.timeSeriesData?.gameTime?.data"
-                        :yData="screepsData.timeSeriesData?.roomData?.[currentRoomName]?.storageData?.energy?.data"
+                        :yData="
+                            screepsData.timeSeriesData?.roomData?.[currentRoomName]?.storageData
+                                ?.energy?.data
+                        "
                         :visible="true"
                     />
                 </el-col>
             </el-row>
 
             <!-- 第七行：外矿能量对比图 -->
-            <el-row v-if="currentRoomName && outwardsSourceData.length > 0" :gutter="24" class="row-container">
+            <el-row
+                v-if="currentRoomName && outwardsSourceData.length > 0"
+                :gutter="24"
+                class="row-container"
+            >
                 <el-col :xs="24" :sm="24" :md="24" :lg="24">
                     <ComparableLineChart
                         id="outwards-source-chart"

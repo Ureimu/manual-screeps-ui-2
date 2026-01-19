@@ -23,7 +23,7 @@ echarts.use([
     TooltipComponent,
     DataZoomComponent,
     TitleComponent,
-    SunburstChart
+    SunburstChart,
 ]);
 
 interface Props {
@@ -39,7 +39,7 @@ const props = withDefaults(defineProps<Props>(), {
             storage: StoreData;
             terminal: StoreData;
             factory: StoreData;
-        }
+        },
 });
 const appStore = useAppStore();
 
@@ -61,23 +61,23 @@ const RES_TREE = {
             "purifier",
             "oxidant",
             "reductant",
-            "ghodium_melt"
-        ]
+            "ghodium_melt",
+        ],
     },
     商品资源: {
         蓝色: ["silicon", "wire", "switch", "transistor", "microchip", "circuit", "device"],
         黄色: ["metal", "alloy", "tube", "fixtures", "frame", "hydraulics", "machine"],
         紫色: ["mist", "condensate", "concentrate", "extract", "spirit", "emanation", "essence"],
-        绿色: ["biomass", "cell", "phlegm", "tissue", "muscle", "organoid", "organism"]
+        绿色: ["biomass", "cell", "phlegm", "tissue", "muscle", "organoid", "organism"],
     },
     LAB资源: {
         蓝色: ["UH", "UH2O", "XUH2O", "UO", "UHO2", "XUHO2"],
         黄色: ["ZH", "ZH2O", "XZH2O", "ZO", "ZHO2", "XZHO2"],
         紫色: ["KH", "KH2O", "XKH2O", "KO", "KHO2", "XKHO2"],
         绿色: ["LH", "LH2O", "XLH2O", "LO", "LHO2", "XLHO2"],
-        白色: ["GH", "GH2O", "XGH2O", "GO", "GHO2", "XGHO2"]
+        白色: ["GH", "GH2O", "XGH2O", "GO", "GHO2", "XGHO2"],
     },
-    empty: { empty: ["empty"] }
+    empty: { empty: ["empty"] },
 };
 
 const RES_COLOR_MAP: Record<string, string> = {
@@ -165,10 +165,12 @@ const RES_COLOR_MAP: Record<string, string> = {
     H: "#ccc",
     O: "#ccc",
     oxidant: "#ccc",
-    reductant: "#ccc"
+    reductant: "#ccc",
 };
 
-function getStorageTerminalRes(room: Partial<RoomData["store"]> | undefined): Record<string, number> {
+function getStorageTerminalRes(
+    room: Partial<RoomData["store"]> | undefined,
+): Record<string, number> {
     const store: Record<string, number> = {};
     if (!room) return {};
     if (room.storage) addStore(store, room.storage.store, room.storage.storeCapacity);
@@ -177,7 +179,11 @@ function getStorageTerminalRes(room: Partial<RoomData["store"]> | undefined): Re
     return store;
 }
 
-function addStore(store: Record<string, number>, b: Record<string, number>, capacity: number): Record<string, number> {
+function addStore(
+    store: Record<string, number>,
+    b: Record<string, number>,
+    capacity: number,
+): Record<string, number> {
     let sum = 0;
     for (const v in b) {
         if (b[v] && b[v] > 0) {
@@ -207,8 +213,8 @@ function buildTree(node: Record<string, number[] | Record<string, number[]>>): T
                 name: resType,
                 value: ori[resType],
                 itemStyle: {
-                    color: RES_COLOR_MAP[resType] ?? RES_COLOR_MAP["energy"] ?? ""
-                }
+                    color: RES_COLOR_MAP[resType] ?? RES_COLOR_MAP["energy"] ?? "",
+                },
             });
         }
     } else {
@@ -216,15 +222,17 @@ function buildTree(node: Record<string, number[] | Record<string, number[]>>): T
             const nodeValue = node[resType];
             if (!nodeValue) continue;
 
-            const children = buildTree(nodeValue as Record<string, number[] | Record<string, number[]>>);
+            const children = buildTree(
+                nodeValue as Record<string, number[] | Record<string, number[]>>,
+            );
             if (children.length) {
                 const firstChildColor = children[0]?.itemStyle?.color || "#999";
                 arr.push({
                     name: resType,
                     itemStyle: {
-                        color: RES_COLOR_MAP[resType] ? RES_COLOR_MAP[resType] : firstChildColor
+                        color: RES_COLOR_MAP[resType] ? RES_COLOR_MAP[resType] : firstChildColor,
                     },
-                    children: children
+                    children: children,
                 });
             }
         }
@@ -237,34 +245,36 @@ function initChart(): void {
 
     if (!chartInstance) {
         chartInstance = echarts.init(chartContainer.value, null, {
-            renderer: "svg"
+            renderer: "svg",
         });
     }
     if (!props.roomData) return;
     console.log(`${props.id} start render sunburst chart`);
 
-    const data = buildTree(RES_TREE as unknown as Record<string, number[] | Record<string, number[]>>);
+    const data = buildTree(
+        RES_TREE as unknown as Record<string, number[] | Record<string, number[]>>,
+    );
 
     const option: EChartsCoreOption & { series?: Record<string, unknown> } = {
         title: {
             text: props.name,
             top: "top",
-            left: "center"
+            left: "center",
         },
         tooltip: { show: true },
         series: {
             itemStyle: {
                 borderColor: "#1b1b1b",
-                borderWidth: 1
+                borderWidth: 1,
             },
             type: "sunburst",
             data: data,
             radius: [0, "95%"],
             sort: null,
             emphasis: {
-                focus: "ancestor"
-            }
-        }
+                focus: "ancestor",
+            },
+        },
     };
 
     chartInstance.setOption(option, { notMerge: true });
@@ -281,7 +291,7 @@ watch(
             initChart();
         }
     },
-    { deep: true }
+    { deep: true },
 );
 
 // 生命周期钩子

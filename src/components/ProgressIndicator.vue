@@ -1,38 +1,38 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import type { LevelData } from '@/type/origin'
+import { computed } from "vue";
+import type { LevelData } from "@/type/origin";
 // import { formatPercent } from '@/utils/formatters'
 
 interface Props {
-    msg: string
-    levelData: LevelData | null
-    isFull?: boolean
+    msg: string;
+    levelData: LevelData | null;
+    isFull?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
     isFull: false,
-})
+});
 
 // 计算属性
 const progressPercent = computed(() => {
-    if (!props.levelData) return 0
-    if (props.levelData.progressTotal === 0) return 0
-    return (props.levelData.progress / props.levelData.progressTotal) * 100
-})
+    if (!props.levelData) return 0;
+    if (props.levelData.progressTotal === 0) return 0;
+    return (props.levelData.progress / props.levelData.progressTotal) * 100;
+});
 
 const barColor = computed(() => {
-    if (props.isFull) return '#f56c6c' // 红色 - 满容量
-    return '#409eff' // 蓝色 - 正常
-})
+    if (props.isFull) return "#f56c6c"; // 红色 - 满容量
+    return "#409eff"; // 蓝色 - 正常
+});
 
 const displayLevel = computed(() => {
-    return props.levelData?.level ?? 0
-})
+    return props.levelData?.level ?? 0;
+});
 
 const progressValue = computed(() => {
-    if (!props.levelData) return '0 / 0'
-    return `${props.levelData.progress} / ${props.levelData.progressTotal}`
-})
+    if (!props.levelData) return "0 / 0";
+    return `${props.levelData.progress} / ${props.levelData.progressTotal}`;
+});
 </script>
 
 <template>
@@ -130,7 +130,7 @@ const progressValue = computed(() => {
 }
 
 .progress-value {
-    font-family: 'Monaco', 'Courier', monospace;
+    font-family: "Monaco", "Courier", monospace;
 }
 
 .progress-percent {
