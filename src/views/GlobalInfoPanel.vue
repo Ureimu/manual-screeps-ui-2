@@ -2,16 +2,17 @@
     <div class="global-info-container">
         <div v-if="screepsData" class="panel-main">
             <!-- 用户信息 -->
-            <el-row :gutter="0" class="row-container">
-                <el-col :xs="24" :sm="24" :md="12" :lg="12">
-                    <el-row :gutter="24" class="inner-row-container">
-                        <el-col :xs="24" :sm="24" :md="24" :lg="12">
-                            <TextContainer title="用户信息" :msg="userInfoMessages" />
+            <el-row :gutter="0" class="row-container first-row">
+                <el-col :xs="24" :sm="24" :md="12" :lg="12" class="left-column">
+                    <el-row :gutter="24" class="inner-row-container full-height">
+                        <el-col :xs="24" :sm="24" :md="24" :lg="24">
+                            <div class="info-section">
+                                <TextContainer title="用户信息" :msg="userInfoMessages" />
+                            </div>
                         </el-col>
                     </el-row>
 
                     <!-- 用户等级进度条 -->
-
                     <el-row :gutter="24" class="inner-row-container">
                         <el-col :xs="24" :sm="24" :md="24" :lg="12">
                             <ProgressIndicator
@@ -29,55 +30,76 @@
                         </el-col>
                     </el-row>
                 </el-col>
+                <el-col :xs="24" :sm="24" :md="12" :lg="12" class="right-column">
+                    <el-row :gutter="24" class="inner-row-container full-height">
+                        <!-- 全局资源分布图 -->
+                        <el-col :xs="24" :sm="24" :md="24" :lg="24">
+                            <div class="chart-section">
+                                <SunBurstResourceChart
+                                    id="global-resource-chart"
+                                    name="全局资源分布"
+                                    :roomData="globalStoreData"
+                                    :visible="true"
+                                />
+                            </div>
+                        </el-col>
+                    </el-row>
+                </el-col>
             </el-row>
 
             <!-- 用户数据折线图 -->
-
-            <el-row :gutter="24" class="row-container">
+            <el-row :gutter="24" class="row-container chart-row">
                 <el-col :xs="24" :sm="24" :md="12" :lg="12">
-                    <FlexibleLineChart
-                        id="credits-chart"
-                        name="Credits"
-                        :timeData="screepsData.timeSeriesData?.timeStamp?.data"
-                        :gameTimeData="screepsData.timeSeriesData?.gameTime?.data"
-                        :yData="screepsData.timeSeriesData?.userData?.credits?.data"
-                        :visible="true"
-                    />
+                    <div class="chart-wrapper">
+                        <FlexibleLineChart
+                            id="credits-chart"
+                            name="Credits"
+                            :timeData="screepsData.timeSeriesData?.timeStamp?.data"
+                            :gameTimeData="screepsData.timeSeriesData?.gameTime?.data"
+                            :yData="screepsData.timeSeriesData?.userData?.credits?.data"
+                            :visible="true"
+                        />
+                    </div>
                 </el-col>
                 <el-col :xs="24" :sm="24" :md="12" :lg="12">
-                    <FlexibleLineChart
-                        id="pixels-chart"
-                        name="Pixels"
-                        :timeData="screepsData.timeSeriesData?.timeStamp?.data"
-                        :gameTimeData="screepsData.timeSeriesData?.gameTime?.data"
-                        :yData="screepsData.timeSeriesData?.userData?.pixels?.data"
-                        :visible="true"
-                    />
+                    <div class="chart-wrapper">
+                        <FlexibleLineChart
+                            id="pixels-chart"
+                            name="Pixels"
+                            :timeData="screepsData.timeSeriesData?.timeStamp?.data"
+                            :gameTimeData="screepsData.timeSeriesData?.gameTime?.data"
+                            :yData="screepsData.timeSeriesData?.userData?.pixels?.data"
+                            :visible="true"
+                        />
+                    </div>
                 </el-col>
             </el-row>
 
             <!-- GCL 和 GPL 进度折线图 -->
-
-            <el-row :gutter="24" class="row-container">
+            <el-row :gutter="24" class="row-container chart-row">
                 <el-col :xs="24" :sm="24" :md="12" :lg="12">
-                    <FlexibleLineChart
-                        id="gcl-progress-chart"
-                        name="GCL 进度"
-                        :timeData="screepsData.timeSeriesData?.timeStamp?.data"
-                        :gameTimeData="screepsData.timeSeriesData?.gameTime?.data"
-                        :yData="screepsData.timeSeriesData?.userData?.gclProgress?.data"
-                        :visible="true"
-                    />
+                    <div class="chart-wrapper">
+                        <FlexibleLineChart
+                            id="gcl-progress-chart"
+                            name="GCL 进度"
+                            :timeData="screepsData.timeSeriesData?.timeStamp?.data"
+                            :gameTimeData="screepsData.timeSeriesData?.gameTime?.data"
+                            :yData="screepsData.timeSeriesData?.userData?.gclProgress?.data"
+                            :visible="true"
+                        />
+                    </div>
                 </el-col>
                 <el-col :xs="24" :sm="24" :md="12" :lg="12">
-                    <FlexibleLineChart
-                        id="gpl-progress-chart"
-                        name="GPL 进度"
-                        :timeData="screepsData.timeSeriesData?.timeStamp?.data"
-                        :gameTimeData="screepsData.timeSeriesData?.gameTime?.data"
-                        :yData="screepsData.timeSeriesData?.userData?.gplProgress?.data"
-                        :visible="true"
-                    />
+                    <div class="chart-wrapper">
+                        <FlexibleLineChart
+                            id="gpl-progress-chart"
+                            name="GPL 进度"
+                            :timeData="screepsData.timeSeriesData?.timeStamp?.data"
+                            :gameTimeData="screepsData.timeSeriesData?.gameTime?.data"
+                            :yData="screepsData.timeSeriesData?.userData?.gplProgress?.data"
+                            :visible="true"
+                        />
+                    </div>
                 </el-col>
             </el-row>
         </div>
@@ -90,11 +112,13 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { useAppStore } from "@/stores/app";
+import type { RoomData } from "@/type/origin";
 
 // 导入子组件
 import ProgressIndicator from "@/components/ProgressIndicator.vue";
 import TextContainer from "@/components/TextContainer.vue";
 import FlexibleLineChart from "@/components/echarts/FlexibleLineChart.vue";
+import SunBurstResourceChart from "@/components/echarts/SunBurstResourceChart.vue";
 
 // Pinia store
 const appStore = useAppStore();
@@ -103,6 +127,56 @@ const appStore = useAppStore();
 const screepsData = computed(() => appStore.screepsData);
 // 切换坐标轴类型现在由NavigationBar处理
 // const axisType = computed(() => appStore.options.axisType);
+
+// 计算所有房间的store数据总和
+const globalStoreData = computed(() => {
+    if (!screepsData.value?.roomData) return undefined;
+
+    const roomData = screepsData.value.roomData;
+    const globalStore = {
+        storage: { store: {} as Record<string, number>, storeCapacity: 0 },
+        terminal: { store: {} as Record<string, number>, storeCapacity: 0 },
+        factory: { store: {} as Record<string, number>, storeCapacity: 0 },
+    };
+
+    // 遍历所有房间，累加store数据
+    Object.values(roomData).forEach((room: RoomData) => {
+        const store = room.store;
+
+        // 累加storage数据
+        if (store.storage) {
+            globalStore.storage.storeCapacity += store.storage.storeCapacity;
+            Object.entries(store.storage.store).forEach(([resource, amount]) => {
+                globalStore.storage.store[resource] =
+                    (globalStore.storage.store[resource] || 0) + amount;
+            });
+        }
+
+        // 累加terminal数据
+        if (store.terminal) {
+            globalStore.terminal.storeCapacity += store.terminal.storeCapacity;
+            Object.entries(store.terminal.store).forEach(([resource, amount]) => {
+                globalStore.terminal.store[resource] =
+                    (globalStore.terminal.store[resource] || 0) + amount;
+            });
+        }
+
+        // 累加factory数据
+        if (store.factory) {
+            globalStore.factory.storeCapacity += store.factory.storeCapacity;
+            Object.entries(store.factory.store).forEach(([resource, amount]) => {
+                globalStore.factory.store[resource] =
+                    (globalStore.factory.store[resource] || 0) + amount;
+            });
+        }
+    });
+
+    return {
+        storage: globalStore.storage,
+        terminal: globalStore.terminal,
+        factory: globalStore.factory,
+    };
+});
 
 // 时间格式化工具
 function formatTime(time: number): string {
@@ -145,5 +219,10 @@ const userInfoMessages = computed(() => {
 
 :deep(.el-row) {
     width: 100%;
+}
+
+:deep(.el-col) {
+    display: flex;
+    flex-direction: column;
 }
 </style>
