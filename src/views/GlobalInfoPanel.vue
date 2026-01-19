@@ -1,19 +1,5 @@
 <template>
     <div class="global-info-container">
-        <!-- 页面标题和控制栏 -->
-        <el-card class="header-card">
-            <template #header>
-                <div class="card-header">
-                    <h1>🌍 全局信息面板</h1>
-                    <div class="header-controls">
-                        <el-button @click="toggleAxisType" type="primary" size="small">
-                            切换轴: {{ axisType === "time" ? "时间" : "Tick" }}
-                        </el-button>
-                    </div>
-                </div>
-            </template>
-        </el-card>
-
         <div v-if="screepsData" class="panel-main">
             <!-- 用户信息 -->
             <el-row :gutter="0" class="row-container">
@@ -115,7 +101,8 @@ const appStore = useAppStore();
 
 // 本地状态
 const screepsData = computed(() => appStore.screepsData);
-const axisType = computed(() => appStore.options.axisType);
+// 切换坐标轴类型现在由NavigationBar处理
+// const axisType = computed(() => appStore.options.axisType);
 
 // 时间格式化工具
 function formatTime(time: number): string {
@@ -136,107 +123,16 @@ const userInfoMessages = computed(() => {
     ];
 });
 
-// 切换坐标轴类型
-function toggleAxisType(): void {
-    appStore.setAxisType(axisType.value === "time" ? "tick" : "time");
-}
+// 切换坐标轴类型 - 现在由NavigationBar处理
+// function toggleAxisType(): void {
+//     appStore.setAxisType(axisType.value === "time" ? "tick" : "time");
+// }
 </script>
 
 <style scoped>
-.global-info-container {
-    padding: 1.5rem;
-    background-color: #f5f7fa;
-    min-height: 100vh;
-    width: 100%;
-    height: 100%;
-    overflow-y: auto;
-    overflow-x: hidden;
-    display: flex;
-    flex-direction: column;
-}
+@import "@/assets/styles/panels.css";
 
-.header-card {
-    margin-bottom: 1.5rem;
-    flex-shrink: 0;
-}
-
-.card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-}
-
-.card-header h1 {
-    margin: 0;
-    font-size: 1.5rem;
-    color: #333;
-}
-
-.header-controls {
-    display: flex;
-    gap: 1rem;
-    align-items: center;
-}
-
-.panel-main {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-    flex: 1;
-    overflow-y: auto;
-}
-
-.row-container {
-    width: 100%;
-    margin-bottom: 10px;
-}
-
-.row-container:last-child {
-    margin-bottom: 0;
-}
-
-.inner-row-container {
-    width: 100%;
-    margin-bottom: 34px;
-}
-
-.inner-row-container:last-child {
-    margin-bottom: 0;
-}
-
-/* 响应式设计 */
-@media (max-width: 1200px) {
-    .card-header {
-        flex-direction: column;
-        gap: 1rem;
-        align-items: flex-start;
-    }
-
-    .header-controls {
-        width: 100%;
-        justify-content: flex-start;
-    }
-}
-
-@media (max-width: 768px) {
-    .global-info-container {
-        padding: 1rem;
-    }
-
-    .card-header h1 {
-        font-size: 1.25rem;
-    }
-
-    .panel-main {
-        gap: 1rem;
-    }
-
-    .row-container {
-        margin-bottom: 1rem !important;
-    }
-}
-
+/* 全局组件样式覆盖 */
 :deep(.el-card) {
     background: #ffffff;
     border: 1px solid #e1e8ed;

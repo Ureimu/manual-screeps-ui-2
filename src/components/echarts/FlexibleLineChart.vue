@@ -403,7 +403,8 @@ onBeforeUnmount(() => {
 
 .chart-container {
     width: 100%;
-    height: 360px;
+    height: 100%;
+    min-height: 360px;
     background: #ffffff;
     border-radius: 4px;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);

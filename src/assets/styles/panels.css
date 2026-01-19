@@ -1,0 +1,188 @@
+/*
+ * 面板共享样式
+ * 合并了GlobalInfoPanel.vue和RoomInfoPanel.vue的样式
+ * 注意：全局组件样式(:deep选择器)已移回各自的Vue文件中
+ */
+
+/* ==================== 面板基础容器样式 ==================== */
+
+/* 全局信息面板容器 */
+.global-info-container {
+    padding: 1.5rem;
+    background-color: #f5f7fa;
+    min-height: 100vh;
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 房间信息面板容器 */
+.dashboard-container {
+    padding: 1.5rem;
+    background-color: #f5f7fa;
+    min-height: 100vh;
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 面板主内容区域 */
+.panel-main {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    flex: 1;
+    overflow-y: auto;
+}
+
+/* ==================== 通用布局样式 ==================== */
+
+/* 行容器 */
+.row-container {
+    width: 100%;
+    margin-bottom: 6px;
+}
+
+.row-container:last-child {
+    margin-bottom: 0;
+}
+
+/* 内层行容器 */
+.inner-row-container {
+    width: 100%;
+    margin-bottom: 30px;
+}
+
+.inner-row-container:last-child {
+    margin-bottom: 0;
+}
+
+/* 全高内层行容器 (RoomInfoPanel专用) */
+.inner-row-container.full-height {
+    height: 100%;
+    margin-bottom: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ==================== RoomInfoPanel专用样式 ==================== */
+
+/* 第一行布局 */
+.first-row {
+    flex: 1;
+    min-height: 400px;
+    max-height: 500px;
+}
+
+/* 图表行布局 */
+.chart-row {
+    flex: 0 0 auto;
+    min-height: 380px;
+}
+
+/* 列布局 */
+.left-column,
+.right-column {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 信息区域样式 */
+.info-section {
+    margin-bottom: 1.5rem;
+    flex: 0 0 auto;
+}
+
+.info-section:last-child {
+    margin-bottom: 0;
+}
+
+/* 全高容器中的信息区域 */
+.inner-row-container.full-height .info-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 图表区域样式 */
+.chart-section {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.chart-section .chart-container {
+    flex: 1;
+    min-height: 360px;
+}
+
+/* 全高容器中的图表区域 */
+.inner-row-container.full-height .chart-section {
+    flex: 1;
+}
+
+/* 图表包装器 */
+.chart-wrapper {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.chart-wrapper .chart-container {
+    flex: 1;
+    min-height: 360px;
+}
+
+/* ==================== 响应式设计 ==================== */
+
+@media (max-width: 768px) {
+    /* 全局容器响应式 */
+    .global-info-container {
+        padding: 1rem;
+    }
+
+    /* 房间容器响应式 */
+    .dashboard-container {
+        padding: 1rem;
+    }
+
+    /* 面板主内容响应式 */
+    .panel-main {
+        gap: 1rem;
+    }
+
+    /* RoomInfoPanel专用响应式 */
+    .first-row {
+        min-height: auto;
+        max-height: none;
+    }
+
+    .chart-row {
+        min-height: 360px;
+    }
+
+    .left-column,
+    .right-column {
+        height: auto;
+    }
+
+    .inner-row-container {
+        margin-bottom: 1rem;
+    }
+
+    .inner-row-container.full-height {
+        height: auto;
+    }
+
+    .info-section,
+    .chart-section {
+        margin-bottom: 1rem;
+    }
+}

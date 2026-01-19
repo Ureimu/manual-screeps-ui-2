@@ -1,50 +1,157 @@
 <template>
-    <el-menu
-        :default-active="activeIndex"
-        mode="horizontal"
-        @select="handleSelect"
-        class="navigation-bar"
-    >
-        <el-menu-item index="/dashboard">
-            <el-icon><House /></el-icon>
-            <span>房间信息</span>
-        </el-menu-item>
-        <el-menu-item index="/global">
-            <el-icon><View /></el-icon>
-            <span>全局信息</span>
-        </el-menu-item>
-    </el-menu>
+    <div class="navigation-container">
+        <!-- 主导航菜单 -->
+        <el-menu
+            :default-active="activeIndex"
+            mode="horizontal"
+            @select="handleSelect"
+            class="navigation-bar"
+        >
+            <el-menu-item index="/dashboard">
+                <el-icon><House /></el-icon>
+                <span>房间信息</span>
+            </el-menu-item>
+            <el-menu-item index="/global">
+                <el-icon><View /></el-icon>
+                <span>全局信息</span>
+            </el-menu-item>
+        </el-menu>
+
+        <!-- 信息显示区域 -->
+        <div class="info-panel">
+            <!-- 全局信息面板 -->
+            <div v-if="isGlobalPage" class="info-content">
+                <div class="info-controls">
+                    <div class="control-buttons">
+                        <el-button @click="toggleAxisType" type="primary" size="small">
+                            切换轴: {{ axisType === "time" ? "时间" : "Tick" }}
+                        </el-button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 房间信息面板 -->
+            <div v-if="isRoomPage" class="info-content">
+                <div class="info-controls">
+                    <div class="control-buttons">
+                        <el-button @click="toggleAxisType" type="primary" size="small">
+                            切换轴: {{ axisType === "time" ? "时间" : "Tick" }}
+                        </el-button>
+
+                        <el-select
+                            v-if="availableRooms.length > 0"
+                            v-model="selectedRoom"
+                            placeholder="选择房间"
+                            size="small"
+                            style="width: 150px"
+                            @change="handleRoomChange"
+                        >
+                            <el-option
+                                v-for="room in availableRooms"
+                                :key="room"
+                                :label="room"
+                                :value="room"
+                            />
+                        </el-select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { ref, computed, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
+import { useAppStore } from "@/stores/app";
 import { House, View } from "@element-plus/icons-vue";
 
 const router = useRouter();
 const route = useRoute();
+const appStore = useAppStore();
 
+// 路由状态
 const activeIndex = ref(route.path);
+
+// 房间选择 - 使用store中的状态
+const selectedRoom = computed({
+    get: () => appStore.selectedRoom,
+    set: (value) => appStore.setSelectedRoom(value),
+});
 
 // 监听路由变化更新激活状态
 watch(
     () => route.path,
     (newPath) => {
         activeIndex.value = newPath;
+        // 重置房间选择
+        if (newPath !== "/dashboard") {
+            selectedRoom.value = null;
+        }
     },
 );
 
+// 计算属性
+const isGlobalPage = computed(() => route.path === "/global");
+const isRoomPage = computed(() => route.path === "/dashboard");
+
+const screepsData = computed(() => appStore.screepsData);
+const axisType = computed(() => appStore.options.axisType);
+
+// 可用房间列表
+const availableRooms = computed(() => {
+    if (!screepsData.value) return [];
+    return Object.keys(screepsData.value.roomData || {});
+});
+
+// 方法
 const handleSelect = (index: string) => {
     router.push(index);
 };
+
+const toggleAxisType = (): void => {
+    appStore.setAxisType(axisType.value === "time" ? "tick" : "time");
+};
+
+const handleRoomChange = (room: string) => {
+    selectedRoom.value = room;
+    // 房间切换已通过store同步
+};
+
+// 初始化房间选择
+watch(
+    availableRooms,
+    (rooms) => {
+        if (rooms.length > 0 && !selectedRoom.value && isRoomPage.value) {
+            selectedRoom.value = rooms[0] || null;
+        }
+    },
+    { immediate: true },
+);
+
+// 监听房间选择变化，确保页面切换时正确显示
+watch(
+    () => route.path,
+    (newPath) => {
+        if (newPath === "/dashboard" && availableRooms.value.length > 0 && !selectedRoom.value) {
+            selectedRoom.value = availableRooms.value[0] || null;
+        }
+    },
+);
 </script>
 
 <style scoped>
-.navigation-bar {
+.navigation-container {
     width: 100%;
     background-color: #ffffff;
     border-bottom: 1px solid #e1e8ed;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.navigation-bar {
+    width: 100%;
+    background-color: transparent;
+    border-bottom: none;
 }
 
 .navigation-bar .el-menu-item {
@@ -70,7 +177,85 @@ const handleSelect = (index: string) => {
     font-size: 16px;
 }
 
+.info-panel {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #f0f0f0;
+    background-color: #fafafa;
+}
+
+.info-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.page-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.page-title h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #303133;
+}
+
+.page-title .el-icon {
+    font-size: 1.25rem;
+    color: #409eff;
+}
+
+.info-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.info-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    flex: 1;
+}
+
+.info-tag {
+    font-size: 12px;
+    height: 24px;
+    line-height: 22px;
+    border-radius: 4px;
+    background-color: #f4f4f5;
+    border-color: #e9e9eb;
+    color: #909399;
+}
+
+.control-buttons {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
 /* 响应式设计 */
+@media (max-width: 992px) {
+    .info-controls {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+
+    .info-items {
+        width: 100%;
+    }
+
+    .control-buttons {
+        width: 100%;
+        justify-content: flex-start;
+    }
+}
+
 @media (max-width: 768px) {
     .navigation-bar .el-menu-item {
         font-size: 13px;
@@ -80,6 +265,20 @@ const handleSelect = (index: string) => {
     .navigation-bar .el-menu-item .el-icon {
         margin-right: 4px;
         font-size: 14px;
+    }
+
+    .info-panel {
+        padding: 0.75rem 1rem;
+    }
+
+    .page-title h2 {
+        font-size: 1.1rem;
+    }
+
+    .info-tag {
+        font-size: 11px;
+        height: 22px;
+        line-height: 20px;
     }
 }
 
@@ -91,6 +290,18 @@ const handleSelect = (index: string) => {
     .navigation-bar .el-menu-item .el-icon {
         margin-right: 0;
         font-size: 16px;
+    }
+
+    .page-title h2 {
+        font-size: 1rem;
+    }
+
+    .info-items {
+        gap: 0.25rem;
+    }
+
+    .control-buttons {
+        flex-wrap: wrap;
     }
 }
 </style>

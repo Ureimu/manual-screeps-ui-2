@@ -15,6 +15,7 @@ export const useAppStore = defineStore("app", () => {
     // UI 状态
     const sidebarCollapsed = ref(false);
     const loading = ref(false);
+    const selectedRoom = ref<string | null>(null); // 当前选中的房间
 
     // 计算属性
     const hasData = computed(() => screepsData.value !== null);
@@ -49,12 +50,18 @@ export const useAppStore = defineStore("app", () => {
         loading.value = isLoading;
     }
 
+    // 方法：设置选中的房间
+    function setSelectedRoom(room: string | null): void {
+        selectedRoom.value = room;
+    }
+
     return {
         // 状态
         screepsData,
         options,
         sidebarCollapsed,
         loading,
+        selectedRoom,
         // 计算属性
         hasData,
         // 方法
@@ -64,5 +71,6 @@ export const useAppStore = defineStore("app", () => {
         setTheme,
         toggleSidebar,
         setLoading,
+        setSelectedRoom,
     };
 });
