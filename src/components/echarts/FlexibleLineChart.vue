@@ -9,7 +9,9 @@
         <span v-if="selectionAvg !== null" style="margin-left: 12px">
             平均变化率(avg): <b>{{ selectionAvg }}{{ selectionAvgUnit }}</b>
         </span>
-        <span v-if="selectionDelta === null && selectionAvg === null">请选择或缩放区间以查看计算结果</span>
+        <span v-if="selectionDelta === null && selectionAvg === null"
+            >请选择或缩放区间以查看计算结果</span
+        >
     </div>
 </template>
 
@@ -26,7 +28,14 @@ import { TitleComponent } from "echarts/components";
 import { useAppStore } from "@/stores/app";
 import { formatTime, numberFormatter } from "@/utils/formatters";
 
-echarts.use([GridComponent, LineChart, SVGRenderer, TooltipComponent, DataZoomComponent, TitleComponent]);
+echarts.use([
+    GridComponent,
+    LineChart,
+    SVGRenderer,
+    TooltipComponent,
+    DataZoomComponent,
+    TitleComponent,
+]);
 
 interface Props {
     name: string;
@@ -41,7 +50,7 @@ const props = withDefaults(defineProps<Props>(), {
     visible: true,
     timeData: () => [],
     gameTimeData: () => [],
-    yData: () => []
+    yData: () => [],
 });
 
 const appStore = useAppStore();
@@ -58,7 +67,11 @@ const selectionAvg = ref<number | null>(null);
 const selectionAvgUnit = ref<string | null>(null);
 
 // 新增：根据 dataZoom 百分比计算选区（右端点y - 左端点y），以及选区平均值
-function computeSelectionFromPercent(startPercent: number, endPercent: number, fullData: [number, number][]): void {
+function computeSelectionFromPercent(
+    startPercent: number,
+    endPercent: number,
+    fullData: [number, number][],
+): void {
     if (!fullData || fullData.length === 0) {
         selectionDelta.value = null;
         selectionAvg.value = null;
@@ -123,7 +136,8 @@ function computeSelectionFromPercent(startPercent: number, endPercent: number, f
     }
 
     selectionDelta.value = Number.isFinite(delta) ? Number(delta) : null;
-    selectionAvg.value = avgRate !== null && Number.isFinite(avgRate) ? Number(Number(avgRate).toFixed(2)) : null;
+    selectionAvg.value =
+        avgRate !== null && Number.isFinite(avgRate) ? Number(Number(avgRate).toFixed(2)) : null;
     selectionAvgUnit.value = unit;
 }
 
@@ -132,11 +146,11 @@ function initChart(): void {
 
     if (!chartInstance) {
         chartInstance = echarts.init(chartContainer.value, null, {
-            renderer: "svg"
+            renderer: "svg",
         });
     }
     if (!props.yData) return;
-    console.log(`${props.id} runRender`);
+    // console.log(`${props.id} runRender`);
 
     let fullData: [number, number][];
 
@@ -160,25 +174,25 @@ function initChart(): void {
         }
     });
     const varyingRateData = varyingRateOriginData.map(
-        value => [value[0][0], value[0][1] - value[1][1]] as [number, number]
+        (value) => [value[0][0], value[0][1] - value[1][1]] as [number, number],
     );
 
     const neededData: Record<string, unknown> = {
         tickData: props.gameTimeData,
         timeData: props.timeData,
-        yData: props.yData
+        yData: props.yData,
     };
 
     for (const key in neededData) {
         if (!neededData[key]) {
-            console.log(`${props.id} ${key} notExist.`);
+            // console.log(`${props.id} ${key} notExist.`);
             return;
         }
     }
 
-    console.log(`${props.id} start render line chart`);
+    // console.log(`${props.id} start render line chart`);
 
-    console.log(axisType.value);
+    // console.log(axisType.value);
 
     const option: EChartsCoreOption & { xAxis?: Record<string, unknown> } = {
         tooltip: {
@@ -187,7 +201,7 @@ function initChart(): void {
             position: function () {
                 const obj: { top: number | string; left?: number; right?: number } = {
                     top: "-20%",
-                    left: 50
+                    left: 50,
                 };
                 return obj;
             },
@@ -199,9 +213,9 @@ function initChart(): void {
                     seriesName: string;
                     color: string;
                     marker: string;
-                }>
+                }>,
             ) => {
-                console.log(params);
+                // console.log(params);
                 let str = "";
                 if (!params || !params[0]) return str;
                 const { dataIndex } = params[0];
@@ -214,12 +228,12 @@ function initChart(): void {
                     }
                 }
                 return str;
-            }
+            },
         },
         title: {
             text: props.name,
             top: "top",
-            left: "center"
+            left: "center",
         },
         xAxis: {},
         yAxis: [
@@ -228,44 +242,44 @@ function initChart(): void {
                 name: "value",
                 scale: true,
                 axisLabel: {
-                    formatter: numberFormatter
+                    formatter: numberFormatter,
                 },
                 splitLine: {
                     lineStyle: {
                         color: ["#16f"],
-                        opacity: 0.2
-                    }
-                }
+                        opacity: 0.2,
+                    },
+                },
             },
             {
                 type: "value",
                 scale: true,
                 name: "delta",
                 axisLabel: {
-                    formatter: numberFormatter
+                    formatter: numberFormatter,
                 },
                 splitLine: {
                     lineStyle: {
                         type: "dashed",
                         color: ["#392"],
-                        opacity: 0
-                    }
-                }
-            }
+                        opacity: 0,
+                    },
+                },
+            },
         ],
         dataZoom: [
             {
                 show: true,
                 realtime: true,
                 start: 0,
-                end: 100
+                end: 100,
             },
             {
                 type: "inside",
                 realtime: true,
                 start: 25,
-                end: 85
-            }
+                end: 85,
+            },
         ],
         series: [
             {
@@ -274,33 +288,33 @@ function initChart(): void {
                 smooth: true,
                 symbol: "none",
                 areaStyle: {},
-                data: fullData
+                data: fullData,
             },
             {
                 name: props.name + " delta",
                 type: "line",
                 yAxisIndex: 1,
                 lineStyle: {
-                    width: 0
+                    width: 0,
                 },
                 showSymbol: false,
-                data: varyingRateData
-            }
-        ]
+                data: varyingRateData,
+            },
+        ],
     };
 
     if (axisType.value === "time") {
         option.xAxis = {
             type: "time",
             axisLine: {
-                show: false
+                show: false,
             },
             axisTick: {
-                show: false
+                show: false,
             },
             splitLine: {
-                show: true
-            }
+                show: true,
+            },
         };
     } else {
         option.xAxis = {
@@ -308,14 +322,14 @@ function initChart(): void {
             min: "dataMin",
             max: "dataMax",
             axisLine: {
-                show: false
+                show: false,
             },
             axisTick: {
-                show: false
+                show: false,
             },
             splitLine: {
-                show: true
-            }
+                show: true,
+            },
         };
     }
 
@@ -357,7 +371,7 @@ watch(
             initChart();
         }
     },
-    { deep: true }
+    { deep: true },
 );
 
 // 生命周期钩子

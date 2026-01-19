@@ -87,7 +87,7 @@ function initChart(): void {
 
     for (const key in neededData) {
         if (!neededData[key]) {
-            console.log(`${props.id} ${key} notExist.`);
+            // console.log(`${props.id} ${key} notExist.`);
             return;
         }
     }
@@ -117,7 +117,7 @@ function initChart(): void {
         });
     });
 
-    console.log(axisType.value);
+    // console.log(axisType.value);
 
     const option: EChartsCoreOption & Record<string, unknown> = {
         tooltip: {
@@ -140,7 +140,7 @@ function initChart(): void {
                     marker: string;
                 }>,
             ) => {
-                console.log(params);
+                // console.log(params);
                 let str = "";
                 if (!params || !params[0]) return str;
                 const { dataIndex } = params[0];

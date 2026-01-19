@@ -237,6 +237,20 @@ function toggleAxisType(): void {
 
 .row-container {
     width: 100%;
+    margin-bottom: 10px;
+}
+
+.row-container:last-child {
+    margin-bottom: 0;
+}
+
+.inner-row-container {
+    width: 100%;
+    margin-bottom: 34px;
+}
+
+.inner-row-container:last-child {
+    margin-bottom: 0;
 }
 
 /* 响应式设计 */

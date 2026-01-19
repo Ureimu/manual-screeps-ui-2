@@ -16,29 +16,32 @@
 
         <div v-if="screepsData" class="panel-main">
             <!-- 用户信息 -->
+            <el-row :gutter="0" class="row-container">
+                <el-col :xs="24" :sm="24" :md="12" :lg="12">
+                    <el-row :gutter="24" class="inner-row-container">
+                        <el-col :xs="24" :sm="24" :md="24" :lg="12">
+                            <TextContainer title="用户信息" :msg="userInfoMessages" />
+                        </el-col>
+                    </el-row>
 
-            <el-row :gutter="24" class="row-container">
-                <el-col :xs="24" :sm="12" :md="8" :lg="6">
-                    <TextContainer title="用户信息" :msg="userInfoMessages" />
-                </el-col>
-            </el-row>
+                    <!-- 用户等级进度条 -->
 
-            <!-- 用户等级进度条 -->
-
-            <el-row :gutter="24" class="row-container">
-                <el-col :xs="24" :sm="12" :md="8" :lg="6">
-                    <ProgressIndicator
-                        msg="GCL"
-                        :levelData="screepsData.userData.gcl"
-                        :isFull="false"
-                    />
-                </el-col>
-                <el-col :xs="24" :sm="12" :md="8" :lg="6">
-                    <ProgressIndicator
-                        msg="GPL"
-                        :levelData="screepsData.userData.gpl"
-                        :isFull="false"
-                    />
+                    <el-row :gutter="24" class="inner-row-container">
+                        <el-col :xs="24" :sm="24" :md="24" :lg="12">
+                            <ProgressIndicator
+                                msg="GCL"
+                                :levelData="screepsData.userData.gcl"
+                                :isFull="false"
+                            />
+                        </el-col>
+                        <el-col :xs="24" :sm="24" :md="24" :lg="12">
+                            <ProgressIndicator
+                                msg="GPL"
+                                :levelData="screepsData.userData.gpl"
+                                :isFull="false"
+                            />
+                        </el-col>
+                    </el-row>
                 </el-col>
             </el-row>
 
@@ -186,6 +189,20 @@ function toggleAxisType(): void {
 
 .row-container {
     width: 100%;
+    margin-bottom: 10px;
+}
+
+.row-container:last-child {
+    margin-bottom: 0;
+}
+
+.inner-row-container {
+    width: 100%;
+    margin-bottom: 34px;
+}
+
+.inner-row-container:last-child {
+    margin-bottom: 0;
 }
 
 /* 响应式设计 */

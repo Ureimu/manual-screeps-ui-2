@@ -249,7 +249,7 @@ function initChart(): void {
         });
     }
     if (!props.roomData) return;
-    console.log(`${props.id} start render sunburst chart`);
+    // console.log(`${props.id} start render sunburst chart`);
 
     const data = buildTree(
         RES_TREE as unknown as Record<string, number[] | Record<string, number[]>>,
