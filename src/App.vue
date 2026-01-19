@@ -1,12 +1,14 @@
-<script setup lang="ts">
-import { RouterView } from "vue-router";
-</script>
-
 <template>
     <div id="app">
+        <NavigationBar />
         <RouterView />
     </div>
 </template>
+
+<script setup lang="ts">
+import { RouterView } from "vue-router";
+import NavigationBar from "@/components/NavigationBar.vue";
+</script>
 
 <style>
 html,
