@@ -14,7 +14,6 @@ declare module 'vue' {
   export interface GlobalComponents {
     ComparableLineChart: typeof import('./src/components/echarts/ComparableLineChart.vue')['default']
     ElButton: typeof import('element-plus/es')['ElButton']
-    ElCard: typeof import('element-plus/es')['ElCard']
     ElCol: typeof import('element-plus/es')['ElCol']
     ElEmpty: typeof import('element-plus/es')['ElEmpty']
     ElIcon: typeof import('element-plus/es')['ElIcon']
@@ -23,7 +22,6 @@ declare module 'vue' {
     ElOption: typeof import('element-plus/es')['ElOption']
     ElRow: typeof import('element-plus/es')['ElRow']
     ElSelect: typeof import('element-plus/es')['ElSelect']
-    ElTag: typeof import('element-plus/es')['ElTag']
     FlexibleLineChart: typeof import('./src/components/echarts/FlexibleLineChart.vue')['default']
     NavigationBar: typeof import('./src/components/NavigationBar.vue')['default']
     ProgressIndicator: typeof import('./src/components/ProgressIndicator.vue')['default']
@@ -38,7 +36,6 @@ declare module 'vue' {
 declare global {
   const ComparableLineChart: typeof import('./src/components/echarts/ComparableLineChart.vue')['default']
   const ElButton: typeof import('element-plus/es')['ElButton']
-  const ElCard: typeof import('element-plus/es')['ElCard']
   const ElCol: typeof import('element-plus/es')['ElCol']
   const ElEmpty: typeof import('element-plus/es')['ElEmpty']
   const ElIcon: typeof import('element-plus/es')['ElIcon']
@@ -47,7 +44,6 @@ declare global {
   const ElOption: typeof import('element-plus/es')['ElOption']
   const ElRow: typeof import('element-plus/es')['ElRow']
   const ElSelect: typeof import('element-plus/es')['ElSelect']
-  const ElTag: typeof import('element-plus/es')['ElTag']
   const FlexibleLineChart: typeof import('./src/components/echarts/FlexibleLineChart.vue')['default']
   const NavigationBar: typeof import('./src/components/NavigationBar.vue')['default']
   const ProgressIndicator: typeof import('./src/components/ProgressIndicator.vue')['default']
