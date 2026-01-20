@@ -4,24 +4,29 @@
             <!-- 用户信息 -->
             <el-row :gutter="0" class="row-container first-row">
                 <el-col :xs="24" :sm="24" :md="12" :lg="12" class="left-column">
-                    <el-row :gutter="24" class="inner-row-container full-height">
-                        <el-col :xs="24" :sm="24" :md="24" :lg="24">
+                    <el-row :gutter="24" class="inner-row-container">
+                        <el-col :xs="24" :sm="24" :md="24" :lg="12">
                             <div class="info-section">
                                 <TextContainer title="用户信息" :msg="userInfoMessages" />
+                            </div>
+                        </el-col>
+                        <el-col :xs="24" :sm="24" :md="24" :lg="12">
+                            <div class="info-section">
+                                <TextContainer title="数据库信息" :msg="storageUsedRatioMessages" />
                             </div>
                         </el-col>
                     </el-row>
 
                     <!-- 用户等级进度条 -->
                     <el-row :gutter="24" class="inner-row-container">
-                        <el-col :xs="24" :sm="24" :md="24" :lg="12">
+                        <el-col :xs="24" :sm="24" :md="12" :lg="12">
                             <ProgressIndicator
                                 msg="GCL"
                                 :levelData="screepsData.userData.gcl"
                                 :isFull="false"
                             />
                         </el-col>
-                        <el-col :xs="24" :sm="24" :md="24" :lg="12">
+                        <el-col :xs="24" :sm="24" :md="12" :lg="12">
                             <ProgressIndicator
                                 msg="GPL"
                                 :levelData="screepsData.userData.gpl"
@@ -206,6 +211,22 @@ const userInfoMessages = computed(() => {
         `当前 Tick: ${timeData.tick}`,
         `游戏时间: ${formatTime(timeData.time)}`,
         `所属分片: ${shardData.shardName}`,
+    ];
+});
+
+// 计算存储使用率信息数组
+const storageUsedRatioMessages = computed(() => {
+    if (!screepsData.value?.statsEngineStorage) return [];
+    const statEngineData = screepsData.value?.statsEngineStorage;
+    const storageUsedRatio = statEngineData.usedRatio;
+    const increaseSpeed = statEngineData.dataIncreaseSpeed;
+    const usedSegmentNumber = statEngineData.usedSegmentsNumber;
+    const maxSize = statEngineData.maxSizePerSegment;
+    const percentage = (storageUsedRatio * 100).toFixed(2);
+    return [
+        `全局存储使用率: ${percentage}%`,
+        `数据大小增长速度：${increaseSpeed.toFixed(2)}bytes/天`,
+        `剩余容量可使用天数：${Math.floor(((1 - storageUsedRatio) * maxSize * usedSegmentNumber) / increaseSpeed)}天`,
     ];
 });
 

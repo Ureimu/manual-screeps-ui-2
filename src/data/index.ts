@@ -37,6 +37,12 @@ const controllerProgressData2 = getRandomSumList(
 const controllerProgressData = controllerProgressData1.concat(controllerProgressData2);
 export const testData: OriginScreepsData = {
     type: "OriginScreepsData",
+    statsEngineStorage: {
+        usedRatio: 0.2362,
+        usedSegmentsNumber: 1,
+        dataIncreaseSpeed: 533.33,
+        maxSizePerSegment: 95 * 1000,
+    },
     timeSeriesData: {
         userData: {
             credits: {

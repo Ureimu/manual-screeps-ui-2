@@ -4,6 +4,12 @@ export interface OriginScreepsData {
         timeStamp: SingleData<number[]>;
         gameTime: SingleData<number[]>;
     };
+    statsEngineStorage: {
+        usedRatio: number;
+        dataIncreaseSpeed: number;
+        usedSegmentsNumber: number;
+        maxSizePerSegment: number;
+    };
     timeData: {
         tick: number;
         time: number;
