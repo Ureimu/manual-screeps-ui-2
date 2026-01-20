@@ -55,16 +55,9 @@ export interface LevelData {
     progressTotal: number;
 }
 export interface ErrorSegmentMemory {
-    cache: ErrorCache;
+    messageList: { short: string; full: string[]; ticks: number[] }[];
     isFull: boolean;
     uncaughtErrorNum: number;
-}
-export interface ErrorCache {
-    [time: number]: SingleErrorCache;
-}
-export interface SingleErrorCache {
-    messageList: { short: string; full: string[] }[];
-    tick: number;
 }
 
 export interface SpawnPoolData {
@@ -117,7 +110,7 @@ export type SingleTypedTreeDataNode<T> = T | SingleTypedTreeDataRecord<T>;
 
 // 下面定义了一个树类型，需要借用接口的特性，参见https://stackoverflow.com/questions/46216048
 // 除非你有更好的方案，否则不要去掉下面的eslint-disable-next-line
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+// eslint-disable-next-line
 interface SingleTypedTreeDataRecord<T> extends Record<string, SingleTypedTreeDataNode<T>> {}
 export type SingleTypedTreeData<T> = Record<string, SingleTypedTreeDataNode<T>> & {
     timeStamp?: T;

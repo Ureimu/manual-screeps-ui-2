@@ -158,83 +158,34 @@ export const testData: OriginScreepsData = {
         },
         name: "Ureium",
         error: {
-            cache: {
-                "228000": {
-                    messageList: [
-                        {
-                            short: "Error: test Error 1",
-                            full: [
-                                "Error: test Error",
-                                "    at src/main.ts:11:40",
-                                "    at wrap  (src/utils/profiler/wrap/loop.ts:115:11)",
-                                "    at ErrorMapper.wrapLoop  (src/main.ts:10:4)",
-                                "    at Object.loop  (src/utils/ErrorMapper.ts:118:16)",
-                            ],
-                        },
-                        {
-                            short: "Error: test Error 2",
-                            full: [
-                                "Error: test Error",
-                                "    at src/main.ts:11:40",
-                                "    at wrap  (src/utils/profiler/wrap/loop.ts:115:11)",
-                                "    at ErrorMapper.wrapLoop  (src/main.ts:10:4)",
-                                "    at Object.loop  (src/utils/ErrorMapper.ts:118:16)",
-                            ],
-                        },
-                        {
-                            short: "Error: test Error 3",
-                            full: [
-                                "Error: test Error",
-                                "    at src/main.ts:11:40",
-                                "    at wrap  (src/utils/profiler/wrap/loop.ts:115:11)",
-                                "    at ErrorMapper.wrapLoop  (src/main.ts:10:4)",
-                                "    at Object.loop  (src/utils/ErrorMapper.ts:118:16) Object.loop  (src/utils/ErrorMapper.ts:118:16)",
-                            ],
-                        },
-                        {
-                            short: "Error: test Error 4",
-                            full: [
-                                "Error: test Error",
-                                "    at src/main.ts:11:40",
-                                "    at wrap  (src/utils/profiler/wrap/loop.ts:115:11)",
-                                "    at ErrorMapper.wrapLoop  (src/main.ts:10:4)",
-                                "    at Object.loop  (src/utils/ErrorMapper.ts:118:16)",
-                            ],
-                        },
+            messageList: [
+                {
+                    short: "Error: test",
+                    full: [
+                        "Error: test",
+                        "    at src/main.ts:52:14",
+                        "    at wrap  (src/utils/profiler/wrap/loop.ts:115:11)",
+                        "    at ErrorMapper.wrapLoop  (src/main.ts:49:4)",
+                        "    at Object.loop  (src/utils/ErrorMapper.ts:120:16)",
                     ],
-                    tick: 228000,
+                    ticks: [77015138, 77015139, 77015140, 77015141, 77015142, 77015143],
                 },
-                "228010": {
-                    messageList: [
-                        {
-                            short: "Error: test Error",
-                            full: [
-                                "Error: test Error",
-                                "    at src/main.ts:11:40",
-                                "    at wrap  (src/utils/profiler/wrap/loop.ts:115:11)",
-                                "    at ErrorMapper.wrapLoop  (src/main.ts:10:4)",
-                                "    at Object.loop  (src/utils/ErrorMapper.ts:118:16)",
-                            ],
-                        },
+                {
+                    short: "TypeError: Cannot destructure property `groupName` of 'undefined' or 'null'.",
+                    full: [
+                        "TypeError: Cannot destructure property `groupName` of 'undefined' or 'null'.",
+                        "    at justDiedCreepSet.forEach.creepName  (src/frame/spawn/spawning/index.ts:194:52)",
+                        "    at registerFN  (src/frame/spawn/spawning/index.ts:193:29)",
+                        "    at wrappedFunction  (src/utils/profiler/wrap/function.ts:57:32)",
+                        "    at registerFN  (src/main.ts:115:12)",
+                        "    at wrappedFunction  (src/utils/profiler/wrap/function.ts:57:32)",
+                        "    at Object.values.forEach.room  (src/main.ts:86:8)",
+                        "    at run  (src/main.ts:85:30)",
+                        "    at src/main.ts:53:8",
                     ],
-                    tick: 228010,
+                    ticks: [77015145],
                 },
-                "228030": {
-                    messageList: [
-                        {
-                            short: "Error: test Error",
-                            full: [
-                                "Error: test Error",
-                                "    at src/main.ts:11:40",
-                                "    at wrap  (src/utils/profiler/wrap/loop.ts:115:11)",
-                                "    at ErrorMapper.wrapLoop  (src/main.ts:10:4)",
-                                "    at Object.loop  (src/utils/ErrorMapper.ts:118:16)",
-                            ],
-                        },
-                    ],
-                    tick: 228030,
-                },
-            },
+            ],
             isFull: false,
             uncaughtErrorNum: 0,
         },
