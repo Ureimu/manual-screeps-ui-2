@@ -15,11 +15,13 @@
                     </el-icon>
                     未捕获错误: {{ errorData.uncaughtErrorNum }}
                 </span>
-                <span class="buffer-status" :class="{ 'buffer-full': errorData.isFull }">
-                    <el-icon :size="16" :color="errorData.isFull ? '#f56c6c' : '#67c23a'">
+                <span class="buffer-status" :class="getBufferStatusClass(bufferUsagePercentage)">
+                    <el-icon :size="16" :color="getBufferIconColor(bufferUsagePercentage)">
                         <DataBoard />
                     </el-icon>
-                    缓冲区: {{ errorData.isFull ? "已满" : "正常" }}
+                    缓冲区: {{ bufferUsagePercentage }}%{{
+                        bufferUsagePercentage >= 100 ? " (已满)" : ""
+                    }}
                 </span>
             </div>
         </header>
@@ -128,6 +130,45 @@ const props = withDefaults(defineProps<Props>(), {
     title: "错误信息",
     currentTick: undefined,
 });
+
+// 计算缓冲区内存占用百分比
+const bufferUsagePercentage = computed(() => {
+    try {
+        const jsonString = JSON.stringify(props.errorData);
+        const bytes = jsonString.length;
+        const percentage = (bytes / (100 * 1024)) * 100;
+        return Math.min(100, Math.round(percentage * 100) / 100);
+    } catch (error) {
+        console.error("计算缓冲区占用百分比失败:", error);
+        return props.errorData.isFull ? 100 : 0;
+    }
+});
+
+// 根据缓冲区使用百分比获取状态类
+const getBufferStatusClass = (percentage: number) => {
+    if (percentage >= 100) {
+        return "full-usage";
+    } else if (percentage >= 80) {
+        return "high-usage";
+    } else if (percentage >= 50) {
+        return "medium-usage";
+    } else {
+        return "low-usage";
+    }
+};
+
+// 根据缓冲区使用百分比获取图标颜色
+const getBufferIconColor = (percentage: number) => {
+    if (percentage >= 100) {
+        return "#f56c6c"; // 红色 - 已满
+    } else if (percentage >= 80) {
+        return "#e6a23c"; // 橙色 - 高使用率
+    } else if (percentage >= 50) {
+        return "#e6a23c"; // 橙色 - 中等使用率
+    } else {
+        return "#67c23a"; // 绿色 - 低使用率
+    }
+};
 
 // 展开的错误索引集合（使用错误摘要作为键，避免排序后索引变化）
 const expandedErrors = ref<Set<string>>(new Set());
@@ -339,13 +380,53 @@ const copyErrorMessage = async (message: string, msgIndex: number) => {
 }
 
 .buffer-status {
-    color: #67c23a;
-    border: 1px solid #e1f3d8;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.8);
+    transition: all 0.3s ease;
 }
 
-.buffer-status.buffer-full {
+.buffer-status.low-usage {
+    color: #67c23a;
+    border: 1px solid #e1f3d8;
+    background: linear-gradient(90deg, #f0f9eb 0%, #e1f3d8 100%);
+}
+
+.buffer-status.medium-usage {
+    color: #e6a23c;
+    border: 1px solid #faecd8;
+    background: linear-gradient(90deg, #fdf6ec 0%, #faecd8 100%);
+}
+
+.buffer-status.high-usage {
     color: #f56c6c;
     border: 1px solid #fcd3d3;
+    background: linear-gradient(90deg, #fef0f0 0%, #fcd3d3 100%);
+}
+
+.buffer-status.full-usage {
+    color: #ffffff;
+    border: 1px solid #f56c6c;
+    background: linear-gradient(90deg, #f56c6c 0%, #c45656 100%);
+    font-weight: 600;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(245, 108, 108, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 6px rgba(245, 108, 108, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(245, 108, 108, 0);
+    }
 }
 
 .error-main {
