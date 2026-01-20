@@ -34,15 +34,25 @@ export interface OriginScreepsData {
         creepBodyConfig: {
             [name: string]: creepBodyConfigDetail;
         };
+        projects: {
+            [projectType: string]: {
+                [projectId: string]: {
+                    diagram: string;
+                    memory: Record<string, unknown>;
+                };
+            };
+        };
     };
 }
 
-export type CreepGroupMemory<T extends CreepGroupMode> = T extends "route"
+export type CreepGroupMemory<T extends CreepGroupMode = CreepGroupMode> = T extends "route"
     ? {
           mode: "route";
           creepNameList: string[];
           routeName?: string;
           ifShow: boolean;
+          arguments: string[];
+          projectName?: string;
       }
     : T extends "role"
       ? {
@@ -50,6 +60,9 @@ export type CreepGroupMemory<T extends CreepGroupMode> = T extends "route"
             creepNameList: string[];
             roleName?: string;
             ifShow: boolean;
+            arguments: string[];
+            projectName?: string;
+            isInterShard?: boolean;
         }
       : never;
 
@@ -66,13 +79,35 @@ export interface ErrorSegmentMemory {
     uncaughtErrorNum: number;
 }
 
-export interface SpawnPoolData {
+export interface SpawnCreepDetail {
     creepName: string;
+    idList: { [name: number]: boolean };
+    creepLevel?: number;
+    /**
+     * creep的部件设定名称
+     */
+    creepBodyConfig: string;
+    /**
+     * creep的部件字符串
+     */
     creepBody: string;
     priority: number;
     spawnCondition: string;
+    creepCondition: string;
     state: string;
+    subCond?: string;
+    subCondArgs?: string[];
+    spawnName?: string;
+    spawning?: boolean;
     roomName: string;
+    spawnCount: number;
+    /**
+     * 从属的project名称。
+     *
+     * @type {string}
+     * @memberof SpawnCreepDetail
+     */
+    projectName?: string;
 }
 export type ControllerLevels = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8";
 
@@ -95,20 +130,9 @@ export interface RoomData {
     creep: {
         num: number;
     };
-    projectDiagram: {
-        maintenance: string;
-        outwardsSource: {
-            [sourceName: string]: {
-                name: string;
-                diagram: string;
-            };
-        };
-        getPower: string;
-        newRoom: string;
-    };
     name: string;
     spawnPool: {
-        [creepName: string]: SpawnPoolData;
+        [creepName: string]: SpawnCreepDetail;
     };
 }
 
