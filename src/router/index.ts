@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from "vue-router";
 import RoomInfoPanel from "@/views/RoomInfoPanel.vue";
 import GlobalInfoPanel from "@/views/GlobalInfoPanel.vue";
+import ProjectDetail from "@/views/ProjectDetail.vue";
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
@@ -24,6 +25,14 @@ const router = createRouter({
             component: GlobalInfoPanel,
             meta: {
                 title: "全局信息面板",
+            },
+        },
+        {
+            path: "/project/:projectType/:projectId",
+            name: "ProjectDetail",
+            component: ProjectDetail,
+            meta: {
+                title: "项目详情",
             },
         },
     ],

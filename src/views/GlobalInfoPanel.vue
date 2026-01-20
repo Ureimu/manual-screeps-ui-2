@@ -63,6 +63,13 @@
                 </el-col>
             </el-row>
 
+            <!-- 项目展示 -->
+            <el-row :gutter="24" class="row-container">
+                <el-col :xs="24" :sm="24" :md="24" :lg="24">
+                    <ProjectsDisplay :projectsData="screepsData.globalData?.projects" />
+                </el-col>
+            </el-row>
+
             <!-- 用户数据折线图 -->
             <el-row :gutter="24" class="row-container chart-row">
                 <el-col :xs="24" :sm="24" :md="12" :lg="12">
@@ -136,6 +143,7 @@ import TextContainer from "@/components/TextContainer.vue";
 import FlexibleLineChart from "@/components/echarts/FlexibleLineChart.vue";
 import SunBurstResourceChart from "@/components/echarts/SunBurstResourceChart.vue";
 import ErrorDisplay from "@/components/ErrorDisplay.vue";
+import ProjectsDisplay from "@/components/ProjectsDisplay.vue";
 
 // Pinia store
 const appStore = useAppStore();
