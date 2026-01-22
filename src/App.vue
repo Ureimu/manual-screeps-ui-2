@@ -11,6 +11,11 @@ import NavigationBar from "@/components/NavigationBar.vue";
 </script>
 
 <style>
+:root {
+    --navigation-bar-height: 120px;
+    --navigation-bar-height-mobile: 100px;
+}
+
 html,
 body {
     width: 100%;
@@ -29,7 +34,6 @@ body {
 #app {
     width: 100%;
     height: 100%;
-    overflow: hidden;
     display: flex;
     flex-direction: column;
 }
