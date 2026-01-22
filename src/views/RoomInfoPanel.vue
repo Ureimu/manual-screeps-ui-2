@@ -60,6 +60,10 @@
                                 screepsData.timeSeriesData?.roomData?.[currentRoomName]
                                     ?.controllerProgress?.data
                             "
+                            :exp="
+                                screepsData.timeSeriesData?.roomData?.[currentRoomName]
+                                    ?.controllerProgress?.exp
+                            "
                             :visible="true"
                         />
                     </div>
@@ -74,6 +78,10 @@
                             :yData="
                                 screepsData.timeSeriesData?.roomData?.[currentRoomName]?.storageData
                                     ?.energy?.data
+                            "
+                            :exp="
+                                screepsData.timeSeriesData?.roomData?.[currentRoomName]?.storageData
+                                    ?.energy?.exp
                             "
                             :visible="true"
                         />
@@ -175,6 +183,7 @@ const outwardsSourceData = computed(() => {
     return Object.entries(roomData.outwardsSourceEnergy).map(([name, data]) => ({
         name,
         data: Array.isArray(data.data) ? data.data : [],
+        exp: data.exp,
     }));
 });
 

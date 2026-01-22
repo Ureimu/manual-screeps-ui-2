@@ -31,6 +31,7 @@ interface Props {
     yDataList: {
         name: string;
         data: (number | null)[];
+        exp?: number;
     }[];
     visible: boolean;
     gameTimeData: number[];
@@ -60,7 +61,15 @@ function initChart(): void {
     }
     if (!props.yDataList) return;
 
-    const dataList = props.yDataList.map((entry) => entry.data);
+    const dataList = props.yDataList.map((entry) => {
+        if (entry.exp !== undefined) {
+            return entry.data.map((value) => {
+                if (value === null) return null;
+                return value * Math.pow(10, entry.exp!);
+            });
+        }
+        return entry.data;
+    });
     const nameList = props.yDataList.map((entry) => entry.name);
 
     let fullDataList: [number, number | null][][];

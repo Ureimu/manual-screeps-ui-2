@@ -80,6 +80,7 @@
                             :timeData="screepsData.timeSeriesData?.timeStamp?.data"
                             :gameTimeData="screepsData.timeSeriesData?.gameTime?.data"
                             :yData="screepsData.timeSeriesData?.userData?.credits?.data"
+                            :exp="screepsData.timeSeriesData?.userData?.credits?.exp"
                             :visible="true"
                         />
                     </div>
@@ -92,6 +93,7 @@
                             :timeData="screepsData.timeSeriesData?.timeStamp?.data"
                             :gameTimeData="screepsData.timeSeriesData?.gameTime?.data"
                             :yData="screepsData.timeSeriesData?.userData?.pixels?.data"
+                            :exp="screepsData.timeSeriesData?.userData?.pixels?.exp"
                             :visible="true"
                         />
                     </div>
@@ -108,6 +110,7 @@
                             :timeData="screepsData.timeSeriesData?.timeStamp?.data"
                             :gameTimeData="screepsData.timeSeriesData?.gameTime?.data"
                             :yData="screepsData.timeSeriesData?.userData?.gclProgress?.data"
+                            :exp="screepsData.timeSeriesData?.userData?.gclProgress?.exp"
                             :visible="true"
                         />
                     </div>
@@ -120,6 +123,7 @@
                             :timeData="screepsData.timeSeriesData?.timeStamp?.data"
                             :gameTimeData="screepsData.timeSeriesData?.gameTime?.data"
                             :yData="screepsData.timeSeriesData?.userData?.gplProgress?.data"
+                            :exp="screepsData.timeSeriesData?.userData?.gplProgress?.exp"
                             :visible="true"
                         />
                     </div>

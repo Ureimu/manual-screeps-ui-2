@@ -44,6 +44,7 @@ interface Props {
     yData?: (number | null)[];
     visible: boolean;
     gameTimeData: number[];
+    exp?: number;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -152,14 +153,23 @@ function initChart(): void {
     if (!props.yData) return;
     // console.log(`${props.id} runRender`);
 
+    // 应用 exp 参数
+    const processedYData = props.yData.map((value) => {
+        if (value === null) return null;
+        if (props.exp !== undefined) {
+            return value * Math.pow(10, props.exp);
+        }
+        return value;
+    });
+
     let fullData: [number, number][];
 
     if (axisType.value === "time") {
-        fullData = props.yData.map((value, index) => {
+        fullData = processedYData.map((value, index) => {
             return [props.timeData[index] as number, value] as [number, number];
         });
     } else {
-        fullData = props.yData.map((value, index) => {
+        fullData = processedYData.map((value, index) => {
             return [props.gameTimeData[index] as number, value] as [number, number];
         });
     }
@@ -180,7 +190,7 @@ function initChart(): void {
     const neededData: Record<string, unknown> = {
         tickData: props.gameTimeData,
         timeData: props.timeData,
-        yData: props.yData,
+        yData: processedYData,
     };
 
     for (const key in neededData) {
