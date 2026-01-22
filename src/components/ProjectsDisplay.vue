@@ -227,13 +227,12 @@ const filteredProjects = computed(() => {
 // 方法
 function getProjectTypeTitle(projectType: string): string {
     const typeMap: Record<string, string> = {
-        construction: "建筑项目",
-        defense: "防御项目",
-        resource: "资源项目",
-        creep: "Creep项目",
-        room: "房间项目",
-        spawn: "孵化项目",
         maintainRoomProject: "房间维护项目",
+        attackStrongholdProject: "攻打要塞项目",
+        interShardNewRoom: "跨shard占领房间项目",
+        getPowerProject: "采集power项目",
+        newRoom: "占领房间项目",
+        outwardsHarvestProject: "外矿项目",
         // 可以添加更多映射
     };
     return typeMap[projectType] || projectType;
@@ -241,12 +240,6 @@ function getProjectTypeTitle(projectType: string): string {
 
 function getTagType(projectType: string): string {
     const typeMap: Record<string, string> = {
-        construction: "primary",
-        defense: "danger",
-        resource: "warning",
-        creep: "success",
-        room: "info",
-        spawn: "",
         maintainRoomProject: "primary",
     };
     return typeMap[projectType] || "";
@@ -368,9 +361,7 @@ watch(
 }
 
 .project-id {
-    font-family: "Courier New", monospace;
     font-weight: 500;
-    color: #409eff;
 }
 
 .pagination-section {
