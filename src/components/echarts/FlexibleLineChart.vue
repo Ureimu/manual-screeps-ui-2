@@ -41,7 +41,7 @@ interface Props {
     name: string;
     id: string;
     timeData: number[];
-    yData?: number[];
+    yData?: (number | null)[];
     visible: boolean;
     gameTimeData: number[];
 }

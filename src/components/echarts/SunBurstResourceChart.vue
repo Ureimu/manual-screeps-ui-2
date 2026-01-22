@@ -49,35 +49,52 @@ let chartInstance: echarts.ECharts | null = null;
 const chartContainer = ref<HTMLElement | null>(null);
 
 const RES_TREE = {
-    POWER资源: { POWER资源: ["power", "ops"] },
-    基础资源: {
-        能量: ["energy", "battery"],
-        原矿: ["U", "L", "K", "Z", "X", "O", "H", "G"],
-        压缩: [
-            "utrium_bar",
-            "lemergium_bar",
-            "keanium_bar",
-            "zynthium_bar",
-            "purifier",
-            "oxidant",
-            "reductant",
-            "ghodium_melt",
-        ],
+    资源: {
+        PWR: { PWR: ["power", "ops"] },
+        能量: { 能量: ["energy"] },
+        原矿: { 原矿: ["U", "L", "K", "Z", "X", "O", "H", "G"] },
+        压缩: {
+            压缩: [
+                "utrium_bar",
+                "lemergium_bar",
+                "keanium_bar",
+                "zynthium_bar",
+                "purifier",
+                "oxidant",
+                "reductant",
+                "ghodium_melt",
+                "battery",
+            ],
+        },
+        商品: {
+            WN商品: ["silicon", "wire", "switch", "transistor", "microchip", "circuit", "device"],
+            WS商品: ["metal", "alloy", "tube", "fixtures", "frame", "hydraulics", "machine"],
+            EN商品: [
+                "mist",
+                "condensate",
+                "concentrate",
+                "extract",
+                "spirit",
+                "emanation",
+                "essence",
+            ],
+            ES商品: ["biomass", "cell", "phlegm", "tissue", "muscle", "organoid", "organism"],
+        },
+
+        化合物: {
+            move: ["ZO", "ZHO2", "XZHO2"],
+            harvest: ["UO", "UHO2", "XUHO2"],
+            "build&repair": ["LH", "LH2O", "XLH2O"],
+            dismantle: ["ZH", "ZH2O", "XZH2O"],
+            upgrade: ["GH", "GH2O", "XGH2O"],
+            carry: ["KH", "KH2O", "XKH2O"],
+            attack: ["UH", "UH2O", "XUH2O"],
+            rangedAttack: ["KO", "KHO2", "XKHO2"],
+            heal: ["LO", "LHO2", "XLHO2"],
+            tough: ["GO", "GHO2", "XGHO2"],
+        },
     },
-    商品资源: {
-        蓝色: ["silicon", "wire", "switch", "transistor", "microchip", "circuit", "device"],
-        黄色: ["metal", "alloy", "tube", "fixtures", "frame", "hydraulics", "machine"],
-        紫色: ["mist", "condensate", "concentrate", "extract", "spirit", "emanation", "essence"],
-        绿色: ["biomass", "cell", "phlegm", "tissue", "muscle", "organoid", "organism"],
-    },
-    LAB资源: {
-        蓝色: ["UH", "UH2O", "XUH2O", "UO", "UHO2", "XUHO2"],
-        黄色: ["ZH", "ZH2O", "XZH2O", "ZO", "ZHO2", "XZHO2"],
-        紫色: ["KH", "KH2O", "XKH2O", "KO", "KHO2", "XKHO2"],
-        绿色: ["LH", "LH2O", "XLH2O", "LO", "LHO2", "XLHO2"],
-        白色: ["GH", "GH2O", "XGH2O", "GO", "GHO2", "XGHO2"],
-    },
-    empty: { empty: ["empty"] },
+    empty: { empty: { empty: ["empty"] } },
 };
 
 const RES_COLOR_MAP: Record<string, string> = {

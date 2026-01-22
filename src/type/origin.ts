@@ -1,6 +1,6 @@
 export interface OriginScreepsData {
     type: "OriginScreepsData";
-    timeSeriesData: FrameStats<number[]> & {
+    timeSeriesData: TimeSeriesStats<(number | null)[]> & {
         timeStamp: SingleData<number[]>;
         gameTime: SingleData<number[]>;
     };
@@ -146,18 +146,24 @@ export type SingleTypedTreeData<T> = Record<string, SingleTypedTreeDataNode<T>> 
     timeStamp?: T;
     gameTime?: T;
 };
-export interface SingleData<T extends number[] | string | number> {
+export interface SingleData<T extends (number | null)[] | string | number> {
     data: T;
     type: string;
     depth: number;
+    /**
+     * 指示该数据在使用时需要乘以10的多少次方。
+     */
+    exp?: number;
 }
 
-export interface FrameStats<T extends string | number | number[]> {
+export type TimeSeriesStats<T extends string | number | (number | null)[]> = {
     userData: {
         credits: SingleData<T>;
         pixels: SingleData<T>;
         gclProgress: SingleData<T>;
         gplProgress: SingleData<T>;
+        bucket: SingleData<T>;
+        cpu: SingleData<T>;
     };
     roomData: {
         [name: string]: {
@@ -170,7 +176,7 @@ export interface FrameStats<T extends string | number | number[]> {
             };
         };
     };
-}
+} & SingleTypedTreeDataRecord<SingleData<T>>;
 
 export interface StoreData {
     store: Record<string, number>;

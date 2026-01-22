@@ -30,7 +30,7 @@ interface Props {
     timeData: number[];
     yDataList: {
         name: string;
-        data: number[];
+        data: (number | null)[];
     }[];
     visible: boolean;
     gameTimeData: number[];
@@ -63,7 +63,7 @@ function initChart(): void {
     const dataList = props.yDataList.map((entry) => entry.data);
     const nameList = props.yDataList.map((entry) => entry.name);
 
-    let fullDataList: [number, number][][];
+    let fullDataList: [number, number | null][][];
 
     if (axisType.value === "time") {
         fullDataList = dataList.map((value) => {
@@ -97,7 +97,7 @@ function initChart(): void {
         type: "line";
         smooth: true;
         symbol: "none";
-        data: [number, number][];
+        data: [number, number | null][];
         lineStyle: {
             width: number;
         };
