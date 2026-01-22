@@ -283,12 +283,16 @@ function initChart(): void {
                 realtime: true,
                 start: 0,
                 end: 100,
+                // echarts6.0.1会修复的bug，目前不要改动，否则dataZoom会错位
+                showDataShadow: false,
             },
             {
                 type: "inside",
                 realtime: true,
                 start: 25,
                 end: 85,
+                // echarts6.0.1会修复的bug，目前不要改动，否则dataZoom会错位
+                showDataShadow: false,
             },
         ],
         series: [

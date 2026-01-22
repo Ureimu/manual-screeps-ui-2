@@ -70,6 +70,45 @@
                 </el-col>
             </el-row>
 
+            <!-- CPU 和 Bucket 折线图 -->
+            <el-row :gutter="24" class="row-container chart-row">
+                <el-col :xs="24" :sm="24" :md="12" :lg="12">
+                    <div class="chart-wrapper">
+                        <ComparableLineChart
+                            id="cpu-chart"
+                            name="CPU 使用情况"
+                            :timeData="screepsData.timeSeriesData?.timeStamp?.data"
+                            :gameTimeData="screepsData.timeSeriesData?.gameTime?.data"
+                            :yDataList="[
+                                {
+                                    name: 'CPU',
+                                    data: screepsData.timeSeriesData?.userData?.cpu?.data,
+                                    exp: screepsData.timeSeriesData?.userData?.cpu?.exp,
+                                },
+                            ]"
+                            :visible="true"
+                        />
+                    </div>
+                </el-col>
+                <el-col :xs="24" :sm="24" :md="12" :lg="12">
+                    <div class="chart-wrapper">
+                        <ComparableLineChart
+                            id="bucket-chart"
+                            name="Bucket"
+                            :timeData="screepsData.timeSeriesData?.timeStamp?.data"
+                            :gameTimeData="screepsData.timeSeriesData?.gameTime?.data"
+                            :yDataList="[
+                                {
+                                    name: 'Bucket',
+                                    data: screepsData.timeSeriesData?.userData?.bucket?.data,
+                                },
+                            ]"
+                            :visible="true"
+                        />
+                    </div>
+                </el-col>
+            </el-row>
+
             <!-- 用户数据折线图 -->
             <el-row :gutter="24" class="row-container chart-row">
                 <el-col :xs="24" :sm="24" :md="12" :lg="12">
@@ -145,6 +184,7 @@ import type { RoomData } from "@/type/origin";
 import ProgressIndicator from "@/components/ProgressIndicator.vue";
 import TextContainer from "@/components/TextContainer.vue";
 import FlexibleLineChart from "@/components/echarts/FlexibleLineChart.vue";
+import ComparableLineChart from "@/components/echarts/ComparableLineChart.vue";
 import SunBurstResourceChart from "@/components/echarts/SunBurstResourceChart.vue";
 import ErrorDisplay from "@/components/ErrorDisplay.vue";
 import ProjectsDisplay from "@/components/ProjectsDisplay.vue";
