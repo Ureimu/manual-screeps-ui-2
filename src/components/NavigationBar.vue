@@ -22,10 +22,21 @@
             <!-- 全局信息面板 -->
             <div v-if="isGlobalPage" class="info-content">
                 <div class="info-controls">
-                    <div class="control-buttons">
-                        <el-button @click="toggleAxisType" type="primary" size="small">
-                            切换轴: {{ axisType === "time" ? "时间" : "Tick" }}
-                        </el-button>
+                    <!-- 左侧：控制按钮 -->
+                    <div class="left-controls">
+                        <div class="control-buttons">
+                            <el-button @click="toggleAxisType" type="primary" size="small">
+                                切换轴: {{ axisType === "time" ? "时间" : "Tick" }}
+                            </el-button>
+                        </div>
+                    </div>
+
+                    <!-- 右侧：shard 信息 -->
+                    <div class="right-info">
+                        <div class="shard-info">
+                            <el-icon><Location /></el-icon>
+                            <span class="shard-text">{{ shardName }}</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -33,26 +44,37 @@
             <!-- 房间信息面板 -->
             <div v-if="isRoomPage" class="info-content">
                 <div class="info-controls">
-                    <div class="control-buttons">
-                        <el-button @click="toggleAxisType" type="primary" size="small">
-                            切换轴: {{ axisType === "time" ? "时间" : "Tick" }}
-                        </el-button>
+                    <!-- 左侧：控制按钮和房间选择器 -->
+                    <div class="left-controls">
+                        <div class="control-buttons">
+                            <el-button @click="toggleAxisType" type="primary" size="small">
+                                切换轴: {{ axisType === "time" ? "时间" : "Tick" }}
+                            </el-button>
 
-                        <el-select
-                            v-if="availableRooms.length > 0"
-                            v-model="selectedRoom"
-                            placeholder="选择房间"
-                            size="small"
-                            style="width: 150px"
-                            @change="handleRoomChange"
-                        >
-                            <el-option
-                                v-for="room in availableRooms"
-                                :key="room"
-                                :label="room"
-                                :value="room"
-                            />
-                        </el-select>
+                            <el-select
+                                v-if="availableRooms.length > 0"
+                                v-model="selectedRoom"
+                                placeholder="选择房间"
+                                size="small"
+                                style="width: 150px"
+                                @change="handleRoomChange"
+                            >
+                                <el-option
+                                    v-for="room in availableRooms"
+                                    :key="room"
+                                    :label="room"
+                                    :value="room"
+                                />
+                            </el-select>
+                        </div>
+                    </div>
+
+                    <!-- 右侧：shard 信息 -->
+                    <div class="right-info">
+                        <div class="shard-info">
+                            <el-icon><Location /></el-icon>
+                            <span class="shard-text">{{ shardName }}</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -64,7 +86,7 @@
 import { ref, computed, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useAppStore } from "@/stores/app";
-import { House, View } from "@element-plus/icons-vue";
+import { House, View, Location } from "@element-plus/icons-vue";
 
 const router = useRouter();
 const route = useRoute();
@@ -97,6 +119,12 @@ const isRoomPage = computed(() => route.path === "/dashboard");
 
 const screepsData = computed(() => appStore.screepsData);
 const axisType = computed(() => appStore.options.axisType);
+
+// shard名称
+const shardName = computed(() => {
+    if (!screepsData.value?.shardData) return "";
+    return screepsData.value.shardData.shardName;
+});
 
 // 可用房间列表
 const availableRooms = computed(() => {
@@ -189,24 +217,6 @@ watch(
     gap: 0.75rem;
 }
 
-.page-title {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.page-title h2 {
-    margin: 0;
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: #303133;
-}
-
-.page-title .el-icon {
-    font-size: 1.25rem;
-    color: #409eff;
-}
-
 .info-controls {
     display: flex;
     justify-content: space-between;
@@ -215,11 +225,33 @@ watch(
     gap: 1rem;
 }
 
+.left-controls {
+    display: flex;
+    align-items: center;
+    flex: 1;
+}
+
+.right-info {
+    display: flex;
+    align-items: center;
+}
+
+.shard-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.shard-text {
+    font-size: 14px;
+    font-weight: 500;
+    color: #606266;
+}
+
 .info-items {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
-    flex: 1;
 }
 
 .info-tag {
@@ -246,8 +278,13 @@ watch(
         gap: 0.75rem;
     }
 
-    .info-items {
+    .left-controls {
         width: 100%;
+    }
+
+    .right-info {
+        width: 100%;
+        justify-content: flex-start;
     }
 
     .control-buttons {
@@ -271,8 +308,8 @@ watch(
         padding: 0.75rem 1rem;
     }
 
-    .page-title h2 {
-        font-size: 1.1rem;
+    .shard-text {
+        font-size: 13px;
     }
 
     .info-tag {
@@ -292,12 +329,8 @@ watch(
         font-size: 16px;
     }
 
-    .page-title h2 {
-        font-size: 1rem;
-    }
-
-    .info-items {
-        gap: 0.25rem;
+    .shard-text {
+        font-size: 12px;
     }
 
     .control-buttons {
