@@ -1,4 +1,4 @@
-import type { OriginScreepsData } from "../type/origin";
+import type { OriginScreepsData } from "AI/AIUreium/ui/type";
 
 export const testData: OriginScreepsData = {
     type: "OriginScreepsData",

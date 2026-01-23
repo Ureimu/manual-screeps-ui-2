@@ -1,6 +1,6 @@
 import { ref, computed } from "vue";
 import { defineStore } from "pinia";
-import type { OriginScreepsData } from "@/type/origin";
+import type { OriginScreepsData } from "AI/AIUreium/ui/type";
 
 export const useAppStore = defineStore("app", () => {
     // 应用数据状态

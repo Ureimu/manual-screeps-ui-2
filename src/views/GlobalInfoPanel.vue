@@ -178,7 +178,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { useAppStore } from "@/stores/app";
-import type { RoomData } from "@/type/origin";
+import type { RoomData } from "AI/AIUreium/ui/type";
 
 // 导入子组件
 import ProgressIndicator from "@/components/ProgressIndicator.vue";

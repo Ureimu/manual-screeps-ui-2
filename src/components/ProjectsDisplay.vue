@@ -136,7 +136,7 @@
 import { ref, computed, watch } from "vue";
 import { useRouter } from "vue-router";
 import { Search } from "@element-plus/icons-vue";
-import type { OriginScreepsData } from "@/type/origin";
+import type { OriginScreepsData } from "AI/AIUreium/ui/type";
 
 interface Props {
     projectsData?: OriginScreepsData["globalData"]["projects"];
