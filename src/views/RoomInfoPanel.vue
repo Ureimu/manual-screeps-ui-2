@@ -89,6 +89,15 @@
                 </el-col>
             </el-row>
 
+            <!-- 项目列表 -->
+            <el-row v-if="currentRoomName" :gutter="24" class="row-container chart-row">
+                <el-col :xs="24" :sm="24" :md="24" :lg="24">
+                    <div class="chart-wrapper">
+                        <ProjectsDisplay :projectsData="filteredProjectsData" />
+                    </div>
+                </el-col>
+            </el-row>
+
             <!-- 外矿能量对比图 -->
             <el-row
                 v-if="currentRoomName && outwardsSourceData.length > 0"
@@ -128,6 +137,7 @@ import TextContainer from "@/components/TextContainer.vue";
 import FlexibleLineChart from "@/components/echarts/FlexibleLineChart.vue";
 import ComparableLineChart from "@/components/echarts/ComparableLineChart.vue";
 import SunBurstResourceChart from "@/components/echarts/SunBurstResourceChart.vue";
+import ProjectsDisplay from "@/components/ProjectsDisplay.vue";
 
 // Pinia store
 const appStore = useAppStore();
@@ -188,6 +198,38 @@ const outwardsSourceData = computed(() => {
         data: Array.isArray(data.data) ? data.data : [],
         exp: data.exp,
     }));
+});
+
+// 筛选项目数据 - 只显示项目ID以当前房间名称开头的项目
+const filteredProjectsData = computed(() => {
+    if (!screepsData.value?.globalData?.projects || !currentRoomName.value) return {};
+
+    const allProjects = screepsData.value.globalData.projects;
+    const filteredProjects: Record<
+        string,
+        Record<string, { diagram: string; memory: Record<string, unknown> }>
+    > = {};
+
+    Object.entries(allProjects).forEach(([projectType, projectsByType]) => {
+        const filteredProjectsByType: Record<
+            string,
+            { diagram: string; memory: Record<string, unknown> }
+        > = {};
+
+        Object.entries(projectsByType).forEach(([projectId, project]) => {
+            // 检查项目ID是否以当前房间名称开头
+            if (projectId.startsWith(currentRoomName.value!)) {
+                filteredProjectsByType[projectId] = project;
+            }
+        });
+
+        // 只有当该类型下有符合条件的项目时才添加到结果中
+        if (Object.keys(filteredProjectsByType).length > 0) {
+            filteredProjects[projectType] = filteredProjectsByType;
+        }
+    });
+
+    return filteredProjects;
 });
 
 // 切换坐标轴类型 - 现在由NavigationBar处理
