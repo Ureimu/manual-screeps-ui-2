@@ -103,6 +103,9 @@
                             :timeData="screepsData.timeSeriesData?.timeStamp?.data"
                             :gameTimeData="screepsData.timeSeriesData?.gameTime?.data"
                             :yDataList="outwardsSourceData"
+                            :mode="'sum'"
+                            :interval="1500"
+                            :aggregateAxis="'tick'"
                             :visible="true"
                         />
                     </div>

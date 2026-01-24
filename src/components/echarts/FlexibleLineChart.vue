@@ -27,6 +27,7 @@ import { DataZoomComponent } from "echarts/components";
 import { TitleComponent } from "echarts/components";
 import { useAppStore } from "@/stores/app";
 import { formatTime, numberFormatter } from "@/utils/formatters";
+import { calculateAggregateData } from "@/utils/chartData";
 
 echarts.use([
     GridComponent,
@@ -45,6 +46,9 @@ interface Props {
     visible: boolean;
     gameTimeData: number[];
     exp?: number;
+    mode?: "none" | "average" | "sum";
+    interval?: number;
+    aggregateAxis?: "time" | "tick";
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -52,6 +56,9 @@ const props = withDefaults(defineProps<Props>(), {
     timeData: () => [],
     gameTimeData: () => [],
     yData: () => [],
+    mode: "none",
+    interval: 1500,
+    aggregateAxis: undefined,
 });
 
 const appStore = useAppStore();
@@ -71,7 +78,7 @@ const selectionAvgUnit = ref<string | null>(null);
 function computeSelectionFromPercent(
     startPercent: number,
     endPercent: number,
-    fullData: [number, number][],
+    fullData: [number, number | null][],
 ): void {
     if (!fullData || fullData.length === 0) {
         selectionDelta.value = null;
@@ -162,29 +169,42 @@ function initChart(): void {
         return value;
     });
 
-    let fullData: [number, number][];
+    let fullData: [number, number | null][];
 
     if (axisType.value === "time") {
         fullData = processedYData.map((value, index) => {
-            return [props.timeData[index] as number, value] as [number, number];
+            return [props.timeData[index] as number, value] as [number, number | null];
         });
     } else {
         fullData = processedYData.map((value, index) => {
-            return [props.gameTimeData[index] as number, value] as [number, number];
+            return [props.gameTimeData[index] as number, value] as [number, number | null];
         });
     }
 
-    const varyingRateOriginData: Array<[[number, number], [number, number]]> = [];
+    // 如果启用了聚合模式，处理数据
+    if (props.mode !== "none" && props.interval && props.interval > 0) {
+        fullData = calculateAggregateData(
+            fullData,
+            props.interval,
+            props.mode,
+            props.aggregateAxis,
+            props.timeData,
+            props.gameTimeData,
+        );
+    }
+
+    const varyingRateOriginData: Array<[[number, number | null], [number, number | null]]> = [];
     fullData.forEach((value, index, array) => {
         if (index > 0) {
             const prev = array[index - 1];
-            if (prev) {
+            if (prev && value[1] !== null && prev[1] !== null) {
                 varyingRateOriginData.push([value, prev]);
             }
         }
     });
     const varyingRateData = varyingRateOriginData.map(
-        (value) => [value[0][0], value[0][1] - value[1][1]] as [number, number],
+        (value) =>
+            [value[0][0], (value[0][1] as number) - (value[1][1] as number)] as [number, number],
     );
 
     const neededData: Record<string, unknown> = {
@@ -241,7 +261,10 @@ function initChart(): void {
             },
         },
         title: {
-            text: props.name,
+            text:
+                props.mode !== "none" && props.interval && props.interval > 0
+                    ? `${props.name} (${props.mode === "average" ? "平均值" : "求和"}区间: ${props.interval}${props.aggregateAxis ? `${props.aggregateAxis === "time" ? "时间" : "tick"}` : axisType.value})`
+                    : props.name,
             top: "top",
             left: "center",
         },
@@ -379,7 +402,14 @@ watch(axisType, () => {
 
 // 监听数据变化
 watch(
-    () => [props.yData, props.timeData, props.gameTimeData],
+    () => [
+        props.yData,
+        props.timeData,
+        props.gameTimeData,
+        props.mode,
+        props.interval,
+        props.aggregateAxis,
+    ],
     () => {
         if (props.visible) {
             initChart();

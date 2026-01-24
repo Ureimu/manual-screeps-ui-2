@@ -14,6 +14,7 @@ import { DataZoomComponent } from "echarts/components";
 import { TitleComponent } from "echarts/components";
 import { useAppStore } from "@/stores/app";
 import { formatTime, numberFormatter } from "@/utils/formatters";
+import { calculateAggregateData } from "@/utils/chartData";
 
 echarts.use([
     GridComponent,
@@ -35,6 +36,9 @@ interface Props {
     }[];
     visible: boolean;
     gameTimeData: number[];
+    mode?: "none" | "average" | "sum";
+    interval?: number;
+    aggregateAxis?: "time" | "tick";
 }
 
 const appStore = useAppStore();
@@ -43,6 +47,9 @@ const props = withDefaults(defineProps<Props>(), {
     timeData: () => [],
     gameTimeData: () => [],
     yDataList: () => [],
+    mode: "none",
+    interval: 1500,
+    aggregateAxis: undefined,
 });
 
 let chartInstance: echarts.ECharts | null = null;
@@ -85,6 +92,20 @@ function initChart(): void {
             return value.map((value2, index) => {
                 return [props.gameTimeData[index] as number, value2];
             });
+        });
+    }
+
+    // 如果启用了聚合模式，处理数据
+    if (props.mode !== "none" && props.interval && props.interval > 0) {
+        fullDataList = fullDataList.map((seriesData) => {
+            return calculateAggregateData(
+                seriesData,
+                props.interval,
+                props.mode,
+                props.aggregateAxis,
+                props.timeData,
+                props.gameTimeData,
+            );
         });
     }
 
@@ -165,7 +186,10 @@ function initChart(): void {
             },
         },
         title: {
-            text: props.name,
+            text:
+                props.mode !== "none" && props.interval && props.interval > 0
+                    ? `${props.name} (${props.mode === "average" ? "平均值" : "求和"}区间: ${props.interval}${props.aggregateAxis ? `${props.aggregateAxis === "time" ? "时间" : "tick"}` : axisType.value})`
+                    : props.name,
             top: "top",
             left: "center",
         },
@@ -247,7 +271,14 @@ watch(axisType, () => {
 
 // 监听数据变化
 watch(
-    () => [props.yDataList, props.timeData, props.gameTimeData],
+    () => [
+        props.yDataList,
+        props.timeData,
+        props.gameTimeData,
+        props.mode,
+        props.interval,
+        props.aggregateAxis,
+    ],
     () => {
         if (props.visible) {
             initChart();

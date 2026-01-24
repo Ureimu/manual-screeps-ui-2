@@ -74,35 +74,28 @@
             <el-row :gutter="24" class="row-container chart-row">
                 <el-col :xs="24" :sm="24" :md="12" :lg="12">
                     <div class="chart-wrapper">
-                        <ComparableLineChart
+                        <FlexibleLineChart
                             id="cpu-chart"
                             name="CPU 使用情况"
                             :timeData="screepsData.timeSeriesData?.timeStamp?.data"
                             :gameTimeData="screepsData.timeSeriesData?.gameTime?.data"
-                            :yDataList="[
-                                {
-                                    name: 'CPU',
-                                    data: screepsData.timeSeriesData?.userData?.cpu?.data,
-                                    exp: screepsData.timeSeriesData?.userData?.cpu?.exp,
-                                },
-                            ]"
+                            :yData="screepsData.timeSeriesData?.userData?.cpu?.data"
+                            :exp="screepsData.timeSeriesData?.userData?.cpu?.exp"
+                            :mode="'average'"
+                            :interval="1500"
+                            :aggregateAxis="'tick'"
                             :visible="true"
                         />
                     </div>
                 </el-col>
                 <el-col :xs="24" :sm="24" :md="12" :lg="12">
                     <div class="chart-wrapper">
-                        <ComparableLineChart
+                        <FlexibleLineChart
                             id="bucket-chart"
                             name="Bucket"
                             :timeData="screepsData.timeSeriesData?.timeStamp?.data"
                             :gameTimeData="screepsData.timeSeriesData?.gameTime?.data"
-                            :yDataList="[
-                                {
-                                    name: 'Bucket',
-                                    data: screepsData.timeSeriesData?.userData?.bucket?.data,
-                                },
-                            ]"
+                            :yData="screepsData.timeSeriesData?.userData?.bucket?.data"
                             :visible="true"
                         />
                     </div>
@@ -184,7 +177,7 @@ import type { RoomData } from "AI/AIUreium/ui/type";
 import ProgressIndicator from "@/components/ProgressIndicator.vue";
 import TextContainer from "@/components/TextContainer.vue";
 import FlexibleLineChart from "@/components/echarts/FlexibleLineChart.vue";
-import ComparableLineChart from "@/components/echarts/ComparableLineChart.vue";
+
 import SunBurstResourceChart from "@/components/echarts/SunBurstResourceChart.vue";
 import ErrorDisplay from "@/components/ErrorDisplay.vue";
 import ProjectsDisplay from "@/components/ProjectsDisplay.vue";
