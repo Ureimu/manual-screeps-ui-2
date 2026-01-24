@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import type { LevelData } from "@/type/origin";
+import type { LevelData } from "AI/AIUreium/ui/type";
 // import { formatPercent } from '@/utils/formatters'
 
 interface Props {

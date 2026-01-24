@@ -13,7 +13,7 @@ import { TooltipComponent } from "echarts/components";
 import { DataZoomComponent } from "echarts/components";
 import { TitleComponent } from "echarts/components";
 import { SunburstChart } from "echarts/charts";
-import type { RoomData, StoreData } from "@/type/origin";
+import type { RoomData, StoreData } from "AI/AIUreium/ui/type";
 import { useAppStore } from "@/stores/app";
 
 echarts.use([
