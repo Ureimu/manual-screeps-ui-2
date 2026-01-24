@@ -785,9 +785,8 @@ watch(
 .project-detail-container {
     padding: 1.5rem;
     background-color: #f5f7fa;
-    min-height: 100vh;
+    height: calc(100vh - var(--navigation-bar-height, 120px));
     width: 100%;
-    height: 100%;
     overflow-y: auto;
     overflow-x: hidden;
 }
@@ -1097,6 +1096,7 @@ watch(
 @media (max-width: 768px) {
     .project-detail-container {
         padding: 1rem;
+        height: calc(100vh - var(--navigation-bar-height-mobile, 100px));
     }
 
     .project-title {
