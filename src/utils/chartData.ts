@@ -96,5 +96,120 @@ export function calculateAggregateData(
     return result;
 }
 
-// 保持向后兼容的别名
-export const calculateAverageData = calculateAggregateData;
+/**
+ * 根据百分比选区计算变化值和平均变化率
+ * 当左右区间端点为null时，会寻找离端点最近的区间内的值作为端点值的替代
+ * @param startPercent 起始百分比 (0-100)
+ * @param endPercent 结束百分比 (0-100)
+ * @param fullData 完整数据数组，格式为 [x, y | null][]
+ * @param axisType 轴类型：'time' 时间轴，'tick' tick轴
+ * @returns 包含变化值、平均变化率和单位的对象
+ */
+export function computeSelectionFromPercent(
+    startPercent: number,
+    endPercent: number,
+    fullData: [number, number | null][],
+    axisType: "time" | "tick",
+): {
+    delta: number | null;
+    avgRate: number | null;
+    unit: string | null;
+} {
+    if (!fullData || fullData.length === 0) {
+        return { delta: null, avgRate: null, unit: null };
+    }
+
+    const len = fullData.length;
+    // clamp and convert percent to indices
+    const sIdx = Math.max(0, Math.min(len - 1, Math.round((startPercent / 100) * (len - 1))));
+    const eIdx = Math.max(0, Math.min(len - 1, Math.round((endPercent / 100) * (len - 1))));
+    const leftIndex = Math.min(sIdx, eIdx);
+    const rightIndex = Math.max(sIdx, eIdx);
+
+    if (rightIndex < 0 || leftIndex >= len) {
+        return { delta: null, avgRate: null, unit: null };
+    }
+
+    const durationLeftData = fullData[leftIndex];
+    const durationRightData = fullData[rightIndex];
+    console.log(fullData);
+
+    if (!durationLeftData || !durationRightData) {
+        return { delta: null, avgRate: null, unit: null };
+    }
+
+    // 寻找左端点最近的非null值
+    let yLeft: number | null = null;
+    if (durationLeftData[1] !== null) {
+        yLeft = durationLeftData[1];
+    } else {
+        // 向右搜索，但不超过右端点
+        for (let i = leftIndex; i < rightIndex; i++) {
+            const [, value] = fullData[i]!;
+            if (value !== null) {
+                yLeft = value;
+                break;
+            }
+        }
+    }
+
+    // 寻找右端点最近的非null值
+    let yRight: number | null = null;
+    if (durationRightData[1] !== null) {
+        yRight = durationRightData[1];
+    } else {
+        // 向左搜索，但不小于左端点
+        for (let i = rightIndex; i > leftIndex; i--) {
+            const [, value] = fullData[i]!;
+            if (value !== null) {
+                yRight = value;
+                break;
+            }
+        }
+    }
+
+    // 如果左右端点都找不到非null值，返回null
+    if (yLeft === null || yRight === null) {
+        return { delta: null, avgRate: null, unit: null };
+    }
+
+    const delta = yRight - yLeft;
+
+    const xLeft = Number(durationLeftData[0]);
+    const xRight = Number(durationRightData[0]);
+    const span = xRight - xLeft;
+
+    let avgRate: number | null = null;
+    let unit: string | null = null;
+
+    if (span === 0) {
+        // 无跨度，无法定义速率
+        avgRate = null;
+        unit = null;
+    } else {
+        if (axisType === "time") {
+            // 时间轴：x 单位为毫秒，转换为秒再计算 (/s)
+            const spanSeconds = span / 1000;
+            if (spanSeconds > 0) {
+                avgRate = delta / spanSeconds;
+                unit = "/s";
+            }
+        } else {
+            // tick 轴：按 tick 计算 (/tick)
+            const spanTicks = span;
+            if (spanTicks > 0) {
+                avgRate = delta / spanTicks;
+                unit = "/tick";
+            }
+        }
+    }
+
+    return {
+        delta: Number.isFinite(delta) ? Number(delta.toFixed(2)) : null,
+        avgRate:
+            avgRate !== null && Number.isFinite(avgRate)
+                ? Number(Number(avgRate).toFixed(2))
+                : null,
+        unit: unit,
+    };
+}

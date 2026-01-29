@@ -27,7 +27,7 @@ import { DataZoomComponent } from "echarts/components";
 import { TitleComponent } from "echarts/components";
 import { useAppStore } from "@/stores/app";
 import { formatTime, numberFormatter } from "@/utils/formatters";
-import { calculateAggregateData } from "@/utils/chartData";
+import { calculateAggregateData, computeSelectionFromPercent } from "@/utils/chartData";
 
 echarts.use([
     GridComponent,
@@ -74,80 +74,7 @@ const selectionAvg = ref<number | null>(null);
 // 新增：平均值单位（"/s" 或 "/tick"）
 const selectionAvgUnit = ref<string | null>(null);
 
-// 新增：根据 dataZoom 百分比计算选区（右端点y - 左端点y），以及选区平均值
-function computeSelectionFromPercent(
-    startPercent: number,
-    endPercent: number,
-    fullData: [number, number | null][],
-): void {
-    if (!fullData || fullData.length === 0) {
-        selectionDelta.value = null;
-        selectionAvg.value = null;
-        selectionAvgUnit.value = null;
-        return;
-    }
-
-    const len = fullData.length;
-    // clamp and convert percent to indices
-    const sIdx = Math.max(0, Math.min(len - 1, Math.round((startPercent / 100) * (len - 1))));
-    const eIdx = Math.max(0, Math.min(len - 1, Math.round((endPercent / 100) * (len - 1))));
-    const left = Math.min(sIdx, eIdx);
-    const right = Math.max(sIdx, eIdx);
-
-    if (right < 0 || left >= len) {
-        selectionDelta.value = null;
-        selectionAvg.value = null;
-        selectionAvgUnit.value = null;
-        return;
-    }
-
-    const leftData = fullData[left];
-    const rightData = fullData[right];
-    if (!leftData || !rightData) {
-        selectionDelta.value = null;
-        selectionAvg.value = null;
-        selectionAvgUnit.value = null;
-        return;
-    }
-
-    const yLeft = Number(leftData[1]) || 0;
-    const yRight = Number(rightData[1]) || 0;
-    const delta = yRight - yLeft;
-
-    const xLeft = Number(leftData[0]);
-    const xRight = Number(rightData[0]);
-    const span = xRight - xLeft;
-
-    let avgRate: number | null = null;
-    let unit: string | null = null;
-
-    if (span === 0) {
-        // 无跨度，无法定义速率
-        avgRate = null;
-        unit = null;
-    } else {
-        if (axisType.value === "time") {
-            // 时间轴：x 单位为毫秒，转换为秒再计算 (/s)
-            const spanSeconds = span / 1000;
-            if (spanSeconds > 0) {
-                avgRate = delta / spanSeconds;
-                unit = "/s";
-            }
-        } else {
-            // tick 轴：按 tick 计算 (/tick)
-            const spanTicks = span;
-            if (spanTicks > 0) {
-                avgRate = delta / spanTicks;
-                unit = "/tick";
-            }
-        }
-    }
-
-    selectionDelta.value = Number.isFinite(delta) ? Number(delta) : null;
-    selectionAvg.value =
-        avgRate !== null && Number.isFinite(avgRate) ? Number(Number(avgRate).toFixed(2)) : null;
-    selectionAvgUnit.value = unit;
-}
+// 使用导入的computeSelectionFromPercent函数
 
 function initChart(): void {
     if (!chartContainer.value || !props.visible) return;
@@ -374,25 +301,22 @@ function initChart(): void {
 
     // 绑定 datazoom 事件，避免重复绑定先移除
     chartInstance.off("datazoom");
-    chartInstance.on("datazoom", (params: unknown) => {
-        const p = params as Record<string, unknown>;
-        // params 结构在不同版本可能不同，兼容 batch 与 非 batch 形式
-        let start = 0;
-        let end = 100;
-        if (p.batch && Array.isArray(p.batch) && p.batch.length > 0) {
-            const batch = p.batch[0] as Record<string, unknown>;
-            start = (batch.start as number) ?? (batch.startValue as number) ?? start;
-            end = (batch.end as number) ?? (batch.endValue as number) ?? end;
-        } else {
-            start = (p.start as number) ?? start;
-            end = (p.end as number) ?? end;
-        }
-        computeSelectionFromPercent(start, end, fullData);
+    chartInstance.on("datazoom", (params) => {
+        const p = params as { start: number; end: number; type: "datazoom" };
+        const start = p.start;
+        const end = p.end;
+        const result = computeSelectionFromPercent(start, end, fullData, axisType.value);
+        selectionDelta.value = result.delta;
+        selectionAvg.value = result.avgRate;
+        selectionAvgUnit.value = result.unit;
     });
 
     // 首次用当前 dataZoom 范围做一次计算（默认 option 中 start=0 end=100）
     // 如果图表已有 dataZoom 状态，也可以从 myChart.getOption() 读取，但使用初始值保证显示
-    computeSelectionFromPercent(0, 100, fullData);
+    const result = computeSelectionFromPercent(0, 100, fullData, axisType.value);
+    selectionDelta.value = result.delta;
+    selectionAvg.value = result.avgRate;
+    selectionAvgUnit.value = result.unit;
 }
 
 // 监听坐标轴类型变化
