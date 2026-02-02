@@ -97,6 +97,25 @@
                     </div>
                 </el-col>
             </el-row>
+
+            <!-- 房间spawnTime对比图 -->
+            <el-row :gutter="24" class="row-container chart-row">
+                <el-col :xs="24" :sm="24" :md="24" :lg="24">
+                    <div class="chart-wrapper">
+                        <ComparableLineChart
+                            id="room-spawntime-comparison-chart"
+                            name="房间spawnTime对比"
+                            :timeData="screepsData.timeSeriesData?.timeStamp?.data"
+                            :gameTimeData="screepsData.timeSeriesData?.gameTime?.data"
+                            :yDataList="roomSpawnTimeData"
+                            :mode="'sum'"
+                            :interval="1500"
+                            :aggregateAxis="'tick'"
+                            :visible="true"
+                        />
+                    </div>
+                </el-col>
+            </el-row>
         </div>
 
         <!-- 无数据提示 -->
@@ -208,6 +227,27 @@ const roomCpuData = computed(() => {
     }
 
     return cpuDataList;
+});
+
+// 获取所有房间的spawnTime数据
+const roomSpawnTimeData = computed(() => {
+    if (!screepsData.value?.timeSeriesData?.roomData) return [];
+
+    const roomData = screepsData.value.timeSeriesData.roomData;
+    const spawnTimeDataList = [];
+
+    // 遍历所有房间，获取spawnTime数据
+    for (const [roomName, roomTimeSeriesData] of Object.entries(roomData)) {
+        if (roomTimeSeriesData?.spawnTime?.data) {
+            spawnTimeDataList.push({
+                name: roomName,
+                data: roomTimeSeriesData.spawnTime.data,
+                exp: roomTimeSeriesData.spawnTime.exp,
+            });
+        }
+    }
+
+    return spawnTimeDataList;
 });
 </script>
 
