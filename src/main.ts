@@ -11,7 +11,6 @@ import App from "./App.vue";
 import router from "./router";
 import { useAppStore } from "./stores/app";
 import type { OriginScreepsData } from "AI/AIUreium/ui/type";
-import { testData } from "./data";
 
 // ==================== 渲染函数 ====================
 /**
@@ -44,14 +43,21 @@ vueApp.mount("#app");
 const isDevelopment = import.meta.env.DEV;
 
 if (isDevelopment) {
-    // 开发环境：使用测试数据
-    console.log("运行在开发环境，使用测试数据");
-    const fullData: OriginScreepsData = testData;
-    try {
-        runRender(fullData);
-    } catch (error) {
-        console.error("开发环境渲染出错:", error);
-    }
+    // 开发环境：使用测试数据（按需导入）
+    console.log("运行在开发环境，加载测试数据...");
+    import("./data")
+        .then(({ testData }) => {
+            console.log("测试数据加载完成");
+            const fullData: OriginScreepsData = testData;
+            try {
+                runRender(fullData);
+            } catch (error) {
+                console.error("开发环境渲染出错:", error);
+            }
+        })
+        .catch((error) => {
+            console.error("加载测试数据失败:", error);
+        });
 } else {
     // 生产环境：监听来自游戏的数据
     console.log("运行在生产环境，等待游戏数据...");
