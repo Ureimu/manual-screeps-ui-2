@@ -36,3 +36,6 @@ coverage
 
 # Vitest
 __screenshots__/
+
+# Test Data
+src/data/index.ts
