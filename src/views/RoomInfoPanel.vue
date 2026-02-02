@@ -89,6 +89,47 @@
                 </el-col>
             </el-row>
 
+            <!-- spawnTime和cpu图表 -->
+            <el-row v-if="currentRoomName" :gutter="24" class="row-container chart-row">
+                <el-col :xs="24" :sm="24" :md="12" :lg="12">
+                    <div class="chart-wrapper">
+                        <FlexibleLineChart
+                            id="spawn-time-chart"
+                            name="孵化时间"
+                            :timeData="screepsData.timeSeriesData?.timeStamp?.data"
+                            :gameTimeData="screepsData.timeSeriesData?.gameTime?.data"
+                            :yData="
+                                screepsData.timeSeriesData?.roomData?.[currentRoomName]?.spawnTime
+                                    ?.data
+                            "
+                            :exp="
+                                screepsData.timeSeriesData?.roomData?.[currentRoomName]?.spawnTime
+                                    ?.exp
+                            "
+                            :mode="'sum'"
+                            :interval="1500"
+                            :aggregateAxis="'tick'"
+                            :visible="true"
+                        />
+                    </div>
+                </el-col>
+                <el-col :xs="24" :sm="24" :md="12" :lg="12">
+                    <div class="chart-wrapper">
+                        <FlexibleLineChart
+                            id="cpu-chart"
+                            name="CPU使用情况"
+                            :timeData="screepsData.timeSeriesData?.timeStamp?.data"
+                            :gameTimeData="screepsData.timeSeriesData?.gameTime?.data"
+                            :yData="
+                                screepsData.timeSeriesData?.roomData?.[currentRoomName]?.cpu?.data
+                            "
+                            :exp="screepsData.timeSeriesData?.roomData?.[currentRoomName]?.cpu?.exp"
+                            :visible="true"
+                        />
+                    </div>
+                </el-col>
+            </el-row>
+
             <!-- 项目列表 -->
             <el-row v-if="currentRoomName" :gutter="24" class="row-container chart-row">
                 <el-col :xs="24" :sm="24" :md="24" :lg="24">
