@@ -43,21 +43,29 @@ vueApp.mount("#app");
 const isDevelopment = import.meta.env.DEV;
 
 if (isDevelopment) {
-    // 开发环境：使用测试数据（按需导入）
-    console.log("运行在开发环境，加载测试数据...");
-    import("./data")
-        .then(({ testData }) => {
-            console.log("测试数据加载完成");
-            const fullData: OriginScreepsData = testData;
-            try {
+    // 开发环境：检测测试数据模块是否存在，如果存在则导入
+    console.log("运行在开发环境，检测测试数据模块...");
+
+    // 尝试动态导入测试数据模块
+    const loadTestData = async () => {
+        try {
+            // 使用动态导入检测模块是否存在
+            const module = await import("./data");
+            if (module && module.testData) {
+                console.log("测试数据模块存在，加载测试数据...");
+                const fullData: OriginScreepsData = module.testData;
                 runRender(fullData);
-            } catch (error) {
-                console.error("开发环境渲染出错:", error);
+                console.log("测试数据加载完成");
+            } else {
+                console.log("测试数据模块不存在或格式不正确，跳过测试数据加载");
             }
-        })
-        .catch((error) => {
-            console.error("加载测试数据失败:", error);
-        });
+        } catch (error) {
+            // 模块不存在或加载失败
+            console.log("测试数据模块不存在，跳过测试数据加载:", error);
+        }
+    };
+
+    loadTestData();
 } else {
     // 生产环境：监听来自游戏的数据
     console.log("运行在生产环境，等待游戏数据...");
