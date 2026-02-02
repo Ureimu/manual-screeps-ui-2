@@ -1,6 +1,6 @@
 /*
  * 面板共享样式
- * 合并了GlobalInfoPanel.vue和RoomInfoPanel.vue的样式
+ * 合并了GlobalInfoPanel.vue、RoomInfoPanel.vue和ShardInfoPanel.vue的样式
  * 注意：全局组件样式(:deep选择器)已移回各自的Vue文件中
  */
 
@@ -20,6 +20,18 @@
 
 /* 房间信息面板容器 */
 .dashboard-container {
+    padding: 1.5rem;
+    background-color: #f5f7fa;
+    height: calc(100vh - var(--navigation-bar-height, 120px));
+    width: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 分片信息面板容器 */
+.shard-info-container {
     padding: 1.5rem;
     background-color: #f5f7fa;
     height: calc(100vh - var(--navigation-bar-height, 120px));
@@ -61,7 +73,7 @@
     margin-bottom: 0;
 }
 
-/* 全高内层行容器 (RoomInfoPanel专用) */
+/* 全高内层行容器 (RoomInfoPanel和ShardInfoPanel专用) */
 .inner-row-container.full-height {
     height: 100%;
     margin-bottom: 0;
@@ -69,7 +81,7 @@
     flex-direction: column;
 }
 
-/* ==================== RoomInfoPanel专用样式 ==================== */
+/* ==================== RoomInfoPanel和ShardInfoPanel专用样式 ==================== */
 
 /* 第一行布局 */
 .first-row {
@@ -152,12 +164,18 @@
         height: calc(100vh - var(--navigation-bar-height-mobile, 100px));
     }
 
+    /* 分片容器响应式 */
+    .shard-info-container {
+        padding: 1rem;
+        height: calc(100vh - var(--navigation-bar-height-mobile, 100px));
+    }
+
     /* 面板主内容响应式 */
     .panel-main {
         gap: 1rem;
     }
 
-    /* RoomInfoPanel专用响应式 */
+    /* RoomInfoPanel和ShardInfoPanel专用响应式 */
     .first-row {
         min-height: auto;
         max-height: none;

@@ -15,6 +15,10 @@
                 <el-icon><View /></el-icon>
                 <span>全局信息</span>
             </el-menu-item>
+            <el-menu-item index="/shard">
+                <el-icon><DataAnalysis /></el-icon>
+                <span>分片信息</span>
+            </el-menu-item>
         </el-menu>
 
         <!-- 信息显示区域 -->
@@ -78,6 +82,28 @@
                     </div>
                 </div>
             </div>
+
+            <!-- 分片信息面板 -->
+            <div v-if="isShardPage" class="info-content">
+                <div class="info-controls">
+                    <!-- 左侧：控制按钮 -->
+                    <div class="left-controls">
+                        <div class="control-buttons">
+                            <el-button @click="toggleAxisType" type="primary" size="small">
+                                切换轴: {{ axisType === "time" ? "时间" : "Tick" }}
+                            </el-button>
+                        </div>
+                    </div>
+
+                    <!-- 右侧：shard 信息 -->
+                    <div class="right-info">
+                        <div class="shard-info">
+                            <el-icon><Location /></el-icon>
+                            <span class="shard-text">{{ shardName }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </template>
@@ -86,7 +112,7 @@
 import { ref, computed, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useAppStore } from "@/stores/app";
-import { House, View, Location } from "@element-plus/icons-vue";
+import { House, View, Location, DataAnalysis } from "@element-plus/icons-vue";
 
 const router = useRouter();
 const route = useRoute();
@@ -116,6 +142,7 @@ watch(
 // 计算属性
 const isGlobalPage = computed(() => route.path === "/global");
 const isRoomPage = computed(() => route.path === "/dashboard");
+const isShardPage = computed(() => route.path === "/shard");
 
 const screepsData = computed(() => appStore.screepsData);
 const axisType = computed(() => appStore.options.axisType);
