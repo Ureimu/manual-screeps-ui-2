@@ -293,6 +293,8 @@ declare module "AI/AIUreium/ui/type" {
                 outwardsSourceEnergy: {
                     [sourceName: string]: SingleData<T>;
                 };
+                spawnTime: SingleData<T>;
+                cpu: SingleData<T>;
             };
         };
     } & SingleTypedTreeDataRecord<SingleData<T>>;
