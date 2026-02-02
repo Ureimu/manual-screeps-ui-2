@@ -23,12 +23,12 @@ export function calculateAggregateData(
 
     // 如果指定了聚合轴，需要重新构建数据
     let processedData = data;
-    if (aggregateAxis === "time" && timeData && timeData.length === data.length) {
+    if (aggregateAxis === "time" && timeData) {
         // 使用时间轴作为x轴
         processedData = data.map(
             ([, y], index) => [timeData[index]!, y] as [number, number | null],
         );
-    } else if (aggregateAxis === "tick" && tickData && tickData.length === data.length) {
+    } else if (aggregateAxis === "tick" && tickData) {
         // 使用tick轴作为x轴
         processedData = data.map(
             ([, y], index) => [tickData[index]!, y] as [number, number | null],
