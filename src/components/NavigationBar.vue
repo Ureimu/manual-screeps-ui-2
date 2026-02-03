@@ -32,6 +32,31 @@
                             <el-button @click="toggleAxisType" type="primary" size="small">
                                 切换轴: {{ axisType === "time" ? "时间" : "Tick" }}
                             </el-button>
+                            <!-- 时间区间预设下拉框 -->
+                            <div class="time-range-selector">
+                                <el-select
+                                    v-model="selectedPreset"
+                                    placeholder="选择时间区间"
+                                    size="small"
+                                    style="width: 150px"
+                                    clearable
+                                >
+                                    <el-option-group
+                                        v-for="group in presetGroups"
+                                        :key="group.type"
+                                        :label="group.label"
+                                    >
+                                        <el-option
+                                            v-for="preset in group.presets"
+                                            :key="preset.label"
+                                            :label="preset.label"
+                                            :value="preset"
+                                            :title="preset.description"
+                                            :class="`preset-option preset-${preset.type}`"
+                                        />
+                                    </el-option-group>
+                                </el-select>
+                            </div>
                         </div>
                     </div>
 
@@ -54,6 +79,31 @@
                             <el-button @click="toggleAxisType" type="primary" size="small">
                                 切换轴: {{ axisType === "time" ? "时间" : "Tick" }}
                             </el-button>
+                            <!-- 时间区间预设下拉框 -->
+                            <div class="time-range-selector">
+                                <el-select
+                                    v-model="selectedPreset"
+                                    placeholder="选择时间区间"
+                                    size="small"
+                                    style="width: 150px"
+                                    clearable
+                                >
+                                    <el-option-group
+                                        v-for="group in presetGroups"
+                                        :key="group.type"
+                                        :label="group.label"
+                                    >
+                                        <el-option
+                                            v-for="preset in group.presets"
+                                            :key="preset.label"
+                                            :label="preset.label"
+                                            :value="preset"
+                                            :title="preset.description"
+                                            :class="`preset-option preset-${preset.type}`"
+                                        />
+                                    </el-option-group>
+                                </el-select>
+                            </div>
 
                             <el-select
                                 v-if="availableRooms.length > 0"
@@ -92,6 +142,31 @@
                             <el-button @click="toggleAxisType" type="primary" size="small">
                                 切换轴: {{ axisType === "time" ? "时间" : "Tick" }}
                             </el-button>
+                            <!-- 时间区间预设下拉框 -->
+                            <div class="time-range-selector">
+                                <el-select
+                                    v-model="selectedPreset"
+                                    placeholder="选择时间区间"
+                                    size="small"
+                                    style="width: 150px"
+                                    clearable
+                                >
+                                    <el-option-group
+                                        v-for="group in presetGroups"
+                                        :key="group.type"
+                                        :label="group.label"
+                                    >
+                                        <el-option
+                                            v-for="preset in group.presets"
+                                            :key="preset.label"
+                                            :label="preset.label"
+                                            :value="preset"
+                                            :title="preset.description"
+                                            :class="`preset-option preset-${preset.type}`"
+                                        />
+                                    </el-option-group>
+                                </el-select>
+                            </div>
                         </div>
                     </div>
 
@@ -113,6 +188,7 @@ import { ref, computed, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useAppStore } from "@/stores/app";
 import { House, View, Location, DataAnalysis } from "@element-plus/icons-vue";
+import { getAllPresets, type TimeRangePreset } from "@/utils/chartPresets";
 
 const router = useRouter();
 const route = useRoute();
@@ -146,6 +222,44 @@ const isShardPage = computed(() => route.path === "/shard");
 
 const screepsData = computed(() => appStore.screepsData);
 const axisType = computed(() => appStore.options.axisType);
+const selectedPreset = computed({
+    get: () => appStore.options.timeRangePreset,
+    set: (value) => {
+        if (value) {
+            appStore.setTimeRangePreset(value);
+            applyPresetToAllCharts(value);
+        } else {
+            appStore.clearTimeRangePreset();
+        }
+    },
+});
+
+// 所有时间区间预设（包含时间和tick）
+const allPresets = computed(() => getAllPresets());
+
+// 分组显示的预设
+const presetGroups = computed(() => {
+    const timePresets = allPresets.value.filter((preset) => preset.type === "time");
+    const tickPresets = allPresets.value.filter((preset) => preset.type === "tick");
+
+    return [
+        {
+            type: "time",
+            label: "时间区间",
+            presets: timePresets,
+        },
+        {
+            type: "tick",
+            label: "Tick区间",
+            presets: tickPresets,
+        },
+    ];
+});
+
+// 图表引用
+const chartRefs = ref<Map<string, { applyTimeRangePreset: (preset: TimeRangePreset) => boolean }>>(
+    new Map(),
+);
 
 // shard名称
 const shardName = computed(() => {
@@ -173,6 +287,34 @@ const handleRoomChange = (room: string) => {
     // 房间切换已通过store同步
 };
 
+// 注册图表引用
+const registerChart = (
+    chartId: string,
+    chartMethods: { applyTimeRangePreset: (preset: TimeRangePreset) => boolean },
+): void => {
+    chartRefs.value.set(chartId, chartMethods);
+};
+
+// 注销图表引用
+const unregisterChart = (chartId: string): void => {
+    chartRefs.value.delete(chartId);
+};
+
+// 应用预设到所有图表
+const applyPresetToAllCharts = (preset: TimeRangePreset): void => {
+    for (const [, chartMethods] of chartRefs.value) {
+        if (chartMethods && typeof chartMethods.applyTimeRangePreset === "function") {
+            chartMethods.applyTimeRangePreset(preset);
+        }
+    }
+};
+
+// 提供注册方法给子组件
+defineExpose({
+    registerChart,
+    unregisterChart,
+});
+
 // 初始化房间选择
 watch(
     availableRooms,
@@ -193,6 +335,11 @@ watch(
         }
     },
 );
+
+// 监听轴类型变化，更新预设列表
+watch(axisType, () => {
+    // 轴类型变化时预设列表会自动更新
+});
 </script>
 
 <style scoped>
@@ -295,6 +442,33 @@ watch(
     display: flex;
     gap: 0.75rem;
     align-items: center;
+    flex-wrap: wrap;
+}
+
+.time-range-selector {
+    display: flex;
+    align-items: center;
+}
+
+.preset-option.preset-time {
+    padding-left: 20px;
+    color: #409eff;
+}
+
+.preset-option.preset-tick {
+    padding-left: 20px;
+    color: #67c23a;
+}
+
+.el-select-dropdown .el-option-group__title {
+    font-weight: bold;
+    color: #606266;
+    background-color: #f5f7fa;
+    padding: 8px 12px;
+}
+
+.el-select-dropdown .el-option-group__wrap:not(:last-of-type) .el-select-dropdown__item {
+    border-bottom: 1px solid #f0f0f0;
 }
 
 /* 响应式设计 */
@@ -344,6 +518,14 @@ watch(
         height: 22px;
         line-height: 20px;
     }
+
+    .time-range-selector {
+        width: 100%;
+    }
+
+    .time-range-selector .el-select {
+        width: 100%;
+    }
 }
 
 @media (max-width: 480px) {
@@ -362,6 +544,10 @@ watch(
 
     .control-buttons {
         flex-wrap: wrap;
+    }
+
+    .time-range-selector .el-select {
+        width: 100%;
     }
 }
 </style>

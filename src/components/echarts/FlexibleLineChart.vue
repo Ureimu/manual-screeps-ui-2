@@ -16,7 +16,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, onBeforeUnmount } from "vue";
+import { ref, computed, onMounted, watch, onBeforeUnmount, getCurrentInstance } from "vue";
 import * as echarts from "echarts/core";
 import type { EChartsCoreOption } from "echarts/core";
 import { GridComponent } from "echarts/components";
@@ -28,6 +28,11 @@ import { TitleComponent } from "echarts/components";
 import { useAppStore } from "@/stores/app";
 import { formatTime, numberFormatter } from "@/utils/formatters";
 import { calculateAggregateData, computeSelectionFromPercent } from "@/utils/chartData";
+import {
+    applyPresetToChart,
+    calculateZoomRangeByPreset,
+    type TimeRangePreset,
+} from "@/utils/chartPresets";
 
 echarts.use([
     GridComponent,
@@ -64,15 +69,72 @@ const props = withDefaults(defineProps<Props>(), {
 const appStore = useAppStore();
 
 const axisType = computed(() => appStore.options.axisType);
+const timeRangePreset = computed(() => appStore.options.timeRangePreset);
 
 let chartInstance: echarts.ECharts | null = null;
 const chartContainer = ref<HTMLElement | null>(null);
+
+// 保存当前的dataZoom范围
+const currentZoomRange = ref<{ start: number; end: number } | null>(null);
 
 // 新增响应式字段：框选结果
 const selectionDelta = ref<number | null>(null);
 const selectionAvg = ref<number | null>(null);
 // 新增：平均值单位（"/s" 或 "/tick"）
 const selectionAvgUnit = ref<string | null>(null);
+
+// 暴露给父组件的方法
+const exposeMethods = {
+    /**
+     * 应用时间区间预设
+     */
+    applyTimeRangePreset: (preset: TimeRangePreset): boolean => {
+        if (!chartInstance) return false;
+
+        // 构建完整数据
+        const processedYData = props.yData.map((value) => {
+            if (value === null) return null;
+            if (props.exp !== undefined) {
+                return value * Math.pow(10, props.exp);
+            }
+            return value;
+        });
+
+        let calculationData: [number, number | null][];
+        // 根据预设类型选择数据源进行计算
+        if (preset.type === "time") {
+            calculationData = processedYData.map((value, index) => {
+                return [props.timeData[index] as number, value] as [number, number | null];
+            });
+        } else {
+            calculationData = processedYData.map((value, index) => {
+                return [props.gameTimeData[index] as number, value] as [number, number | null];
+            });
+        }
+
+        const result = applyPresetToChart(chartInstance, calculationData, preset);
+        if (result && chartInstance) {
+            // 更新保存的dataZoom范围
+            const zoomRange = calculateZoomRangeByPreset(calculationData, preset.value);
+            if (zoomRange) {
+                currentZoomRange.value = zoomRange;
+            }
+        }
+        return result;
+    },
+
+    /**
+     * 获取图表实例
+     */
+    getChartInstance: () => chartInstance,
+};
+
+// 暴露方法给父组件
+defineExpose(exposeMethods);
+
+// 获取父组件实例以注册图表
+const instance = getCurrentInstance();
+const parent = instance?.parent;
 
 // 使用导入的computeSelectionFromPercent函数
 
@@ -299,6 +361,58 @@ function initChart(): void {
 
     chartInstance.setOption(option, { notMerge: true });
 
+    // 恢复保存的dataZoom范围
+    if (currentZoomRange.value && chartInstance) {
+        chartInstance.dispatchAction({
+            type: "dataZoom",
+            start: currentZoomRange.value.start,
+            end: currentZoomRange.value.end,
+            dataZoomIndex: 0,
+        });
+    }
+
+    // 监听预设变化
+    watch(
+        timeRangePreset,
+        (newPreset) => {
+            if (newPreset && chartInstance) {
+                // 构建完整数据
+                const processedYData = props.yData.map((value) => {
+                    if (value === null) return null;
+                    if (props.exp !== undefined) {
+                        return value * Math.pow(10, props.exp);
+                    }
+                    return value;
+                });
+
+                let calculationData: [number, number | null][];
+                // 根据预设类型选择数据源进行计算
+                if (newPreset.type === "time") {
+                    calculationData = processedYData.map((value, index) => {
+                        return [props.timeData[index] as number, value] as [number, number | null];
+                    });
+                } else {
+                    calculationData = processedYData.map((value, index) => {
+                        return [props.gameTimeData[index] as number, value] as [
+                            number,
+                            number | null,
+                        ];
+                    });
+                }
+
+                const result = applyPresetToChart(chartInstance, calculationData, newPreset);
+                if (result && chartInstance) {
+                    // 更新保存的dataZoom范围
+                    const zoomRange = calculateZoomRangeByPreset(calculationData, newPreset.value);
+                    if (zoomRange) {
+                        currentZoomRange.value = zoomRange;
+                    }
+                }
+            }
+        },
+        { immediate: true },
+    );
+
     // 绑定 datazoom 事件，避免重复绑定先移除
     chartInstance.off("datazoom");
     chartInstance.on("datazoom", (params) => {
@@ -321,6 +435,23 @@ function initChart(): void {
 
 // 监听坐标轴类型变化
 watch(axisType, () => {
+    // 保存当前的dataZoom范围
+    if (chartInstance) {
+        const option = chartInstance.getOption();
+        if (option.dataZoom && Array.isArray(option.dataZoom) && option.dataZoom.length > 0) {
+            const dataZoom = option.dataZoom[0];
+            if (
+                dataZoom &&
+                typeof dataZoom.start === "number" &&
+                typeof dataZoom.end === "number"
+            ) {
+                currentZoomRange.value = {
+                    start: dataZoom.start,
+                    end: dataZoom.end,
+                };
+            }
+        }
+    }
     initChart();
 });
 
@@ -353,6 +484,11 @@ onMounted(() => {
         chartInstance?.resize();
     };
     window.addEventListener("resize", handleResize);
+
+    // 注册图表到父组件（NavigationBar）
+    if (parent && parent.exposed && typeof parent.exposed.registerChart === "function") {
+        parent.exposed.registerChart(props.id, exposeMethods);
+    }
 });
 
 onBeforeUnmount(() => {
@@ -360,6 +496,12 @@ onBeforeUnmount(() => {
         chartInstance.dispose();
         chartInstance = null;
     }
+
+    // 注销图表从父组件（NavigationBar）
+    if (parent && parent.exposed && typeof parent.exposed.unregisterChart === "function") {
+        parent.exposed.unregisterChart(props.id);
+    }
+
     window.removeEventListener("resize", () => {});
 });
 </script>

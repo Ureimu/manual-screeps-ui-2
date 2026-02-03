@@ -1,6 +1,7 @@
 import { ref, computed } from "vue";
 import { defineStore } from "pinia";
 import type { OriginScreepsData } from "AI/AIUreium/ui/type";
+import type { TimeRangePreset } from "@/utils/chartPresets";
 
 export const useAppStore = defineStore("app", () => {
     // 应用数据状态
@@ -10,6 +11,7 @@ export const useAppStore = defineStore("app", () => {
     const options = ref({
         axisType: "time" as "time" | "tick", // 坐标轴类型：时间或游戏tick
         theme: "light" as "light" | "dark", // 主题
+        timeRangePreset: null as TimeRangePreset | null, // 时间区间预设
     });
 
     // UI 状态
@@ -33,6 +35,17 @@ export const useAppStore = defineStore("app", () => {
     // 方法：切换坐标轴类型
     function setAxisType(type: "time" | "tick"): void {
         options.value.axisType = type;
+        // 切换轴类型时不清空预设，保持预设选择
+    }
+
+    // 方法：设置时间区间预设
+    function setTimeRangePreset(preset: TimeRangePreset | null): void {
+        options.value.timeRangePreset = preset;
+    }
+
+    // 方法：清空时间区间预设
+    function clearTimeRangePreset(): void {
+        options.value.timeRangePreset = null;
     }
 
     // 方法：切换主题
@@ -68,6 +81,8 @@ export const useAppStore = defineStore("app", () => {
         setScreepsData,
         clearScreepsData,
         setAxisType,
+        setTimeRangePreset,
+        clearTimeRangePreset,
         setTheme,
         toggleSidebar,
         setLoading,
