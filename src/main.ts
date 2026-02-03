@@ -39,33 +39,38 @@ vueApp.use(ElementPlus, { size: "small", zIndex: 3000 });
 vueApp.mount("#app");
 
 // ==================== 数据处理逻辑 ====================
-// 检查开发环境/生产环境标识 (使用import.meta.env代替process.env以适配Vite)
+// 检查开发环境/生产环境标识
 const isDevelopment = import.meta.env.DEV;
 
 if (isDevelopment) {
     // 开发环境：检测测试数据模块是否存在，如果存在则导入
     console.log("运行在开发环境，检测测试数据模块...");
 
-    // 尝试动态导入测试数据模块
-    const loadTestData = async () => {
-        try {
-            // 使用动态导入检测模块是否存在
-            const module = await import("./data");
+    // 使用 Vite 的 import.meta.glob 来检查模块是否存在
+    try {
+        // 使用 import.meta.glob 动态检查模块
+        const modules = import.meta.glob("./data/index.ts", { eager: false });
+
+        if (modules["./data/index.ts"]) {
+            // 模块存在，动态导入
+            const module = (await modules["./data/index.ts"]()) as unknown as {
+                testData: OriginScreepsData;
+            };
             if (module && module.testData) {
                 console.log("测试数据模块存在，加载测试数据...");
                 const fullData: OriginScreepsData = module.testData;
                 runRender(fullData);
                 console.log("测试数据加载完成");
             } else {
-                console.log("测试数据模块不存在或格式不正确，跳过测试数据加载");
+                console.log("测试数据模块存在，但没有 testData 导出，跳过测试数据加载");
             }
-        } catch (error) {
-            // 模块不存在或加载失败
-            console.log("测试数据模块不存在，跳过测试数据加载:", error);
+        } else {
+            console.log("测试数据模块不存在，跳过测试数据加载");
         }
-    };
-
-    loadTestData();
+    } catch (error) {
+        // 模块加载失败
+        console.log("测试数据模块加载失败:", error);
+    }
 } else {
     // 生产环境：监听来自游戏的数据
     console.log("运行在生产环境，等待游戏数据...");

@@ -27,4 +27,9 @@ export default defineConfig({
         },
     },
     base: "/manual-screeps-ui-2/",
+    build: {
+        rollupOptions: {
+            external: ["./src/data/index.ts"],
+        },
+    },
 });
