@@ -63,14 +63,6 @@
                         :data="section.data"
                         :section-key="section.key"
                     />
-
-                    <!-- 资源限制展示 -->
-                    <ConfigResourcesDisplay
-                        v-else-if="section.displayType === 'resources'"
-                        :data="section.data"
-                        :section-key="section.key"
-                        :is-different-from-default="isDifferentFromDefault"
-                    />
                 </div>
             </el-collapse-item>
         </el-collapse>
@@ -87,7 +79,6 @@ import { ref, computed, watch } from "vue";
 import { Setting, Search, Filter } from "@element-plus/icons-vue";
 import type { ScreepsConfig, RoomConfig } from "AI/AIUreium/config/type";
 import ConfigObjectDisplay from "./displayType/ConfigObjectDisplay.vue";
-import ConfigResourcesDisplay from "./displayType/ConfigResourcesDisplay.vue";
 
 interface Props {
     roomName: string | null;
@@ -167,10 +158,6 @@ const configSections = [
         key: "rebootRoom",
         displayType: "object" as const,
     },
-    {
-        key: "roomResources",
-        displayType: "resources" as const,
-    },
 ];
 
 // 默认配置项（用于configSections中没有的key）
@@ -204,16 +191,6 @@ const getStatusTag = (sectionKey: string, data: unknown) => {
     if (!section || !data || typeof data !== "object" || data === null) return null;
 
     const dataObj = data as Record<string, unknown>;
-
-    // 特殊处理roomResources，显示资源项数量
-    if (sectionKey === "roomResources" && dataObj.limit) {
-        const limitData = dataObj.limit as Record<string, unknown>;
-        const count = Object.keys(limitData).length;
-        return {
-            type: "success",
-            text: `${count} 项`,
-        };
-    }
 
     // 其他配置项的状态字段
     if (!section.statusField) return null;
@@ -250,6 +227,9 @@ const processedSections = computed(() => {
 
     // 遍历roomConfig中的所有key
     for (const key in roomConfig.value) {
+        // 排除roomResources，它现在有单独的组件显示
+        if (key === "roomResources") continue;
+
         const data = roomConfig.value[key as keyof RoomConfig] as Record<string, unknown>;
         if (data === undefined) continue;
 

@@ -59,6 +59,18 @@
                 </el-col>
             </el-row>
 
+            <!-- 房间资源配置显示 -->
+            <el-row v-if="currentRoomName" :gutter="24" class="row-container chart-row">
+                <el-col :xs="24" :sm="24" :md="24" :lg="24">
+                    <div class="config-section">
+                        <RoomResourceConfigDisplay
+                            :roomName="currentRoomName || null"
+                            :configData="screepsData.config"
+                        />
+                    </div>
+                </el-col>
+            </el-row>
+
             <!-- 房间控制器进度和能量存储 -->
             <el-row v-if="currentRoomName" :gutter="24" class="row-container chart-row">
                 <el-col :xs="24" :sm="24" :md="12" :lg="12">
@@ -192,6 +204,7 @@ import ComparableLineChart from "@/components/echarts/ComparableLineChart.vue";
 import SunBurstResourceChart from "@/components/echarts/SunBurstResourceChart.vue";
 import ProjectsDisplay from "@/components/ProjectsDisplay.vue";
 import RoomConfigDisplay from "@/components/config/RoomConfigDisplay.vue";
+import RoomResourceConfigDisplay from "@/components/config/RoomResourceConfigDisplay.vue";
 
 // Pinia store
 const appStore = useAppStore();
