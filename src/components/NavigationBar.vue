@@ -32,6 +32,9 @@
                             <el-button @click="toggleAxisType" type="primary" size="small">
                                 切换轴: {{ axisType === "time" ? "时间" : "Tick" }}
                             </el-button>
+                            <el-button @click="downloadData" type="success" size="small">
+                                下载数据
+                            </el-button>
                             <!-- 时间区间预设下拉框 -->
                             <div class="time-range-selector">
                                 <el-select
@@ -78,6 +81,9 @@
                         <div class="control-buttons">
                             <el-button @click="toggleAxisType" type="primary" size="small">
                                 切换轴: {{ axisType === "time" ? "时间" : "Tick" }}
+                            </el-button>
+                            <el-button @click="downloadData" type="success" size="small">
+                                下载数据
                             </el-button>
                             <!-- 时间区间预设下拉框 -->
                             <div class="time-range-selector">
@@ -141,6 +147,9 @@
                         <div class="control-buttons">
                             <el-button @click="toggleAxisType" type="primary" size="small">
                                 切换轴: {{ axisType === "time" ? "时间" : "Tick" }}
+                            </el-button>
+                            <el-button @click="downloadData" type="success" size="small">
+                                下载数据
                             </el-button>
                             <!-- 时间区间预设下拉框 -->
                             <div class="time-range-selector">
@@ -340,6 +349,41 @@ watch(
 watch(axisType, () => {
     // 轴类型变化时预设列表会自动更新
 });
+
+// 下载数据方法
+const downloadData = (): void => {
+    if (!screepsData.value) {
+        console.warn("没有数据可下载");
+        return;
+    }
+
+    try {
+        // 创建要下载的内容
+        const content = `import type { OriginScreepsData } from "AI/AIUreium/ui/type";
+export const testData: OriginScreepsData = ${JSON.stringify(screepsData.value)} as unknown as OriginScreepsData;`;
+
+        // 创建Blob对象
+        const blob = new Blob([content], { type: "text/typescript" });
+
+        // 创建下载链接
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `screeps-data-${new Date().toISOString().slice(0, 19).replace(/:/g, "-")}.ts`;
+
+        // 触发下载
+        document.body.appendChild(a);
+        a.click();
+
+        // 清理
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        console.log("数据下载成功");
+    } catch (error) {
+        console.error("下载数据时出错:", error);
+    }
+};
 </script>
 
 <style scoped>
