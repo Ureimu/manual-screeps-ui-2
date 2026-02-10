@@ -28,6 +28,7 @@ export default defineConfigWithVueTs(
     {
         rules: {
             "@typescript-eslint/no-empty-object-type": "off",
+            "@typescript-eslint/no-unsafe-function-type": "off",
         },
     },
 
