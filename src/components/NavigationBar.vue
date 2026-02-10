@@ -35,6 +35,18 @@
                             <el-button @click="downloadData" type="success" size="small">
                                 下载数据
                             </el-button>
+                            <el-upload
+                                class="upload-demo"
+                                :show-file-list="false"
+                                :before-upload="beforeUpload"
+                                :on-success="handleUploadSuccess"
+                                :on-error="handleUploadError"
+                                accept=".ts,.js,.json"
+                                action="#"
+                                :http-request="handleUploadRequest"
+                            >
+                                <el-button type="warning" size="small"> 上传数据 </el-button>
+                            </el-upload>
                             <!-- 时间区间预设下拉框 -->
                             <div class="time-range-selector">
                                 <el-select
@@ -63,8 +75,14 @@
                         </div>
                     </div>
 
-                    <!-- 右侧：shard 信息 -->
+                    <!-- 右侧：数据时间和shard信息 -->
                     <div class="right-info">
+                        <div class="tick-info" v-if="dataTick">
+                            <span class="tick-text">{{ dataTick }}</span>
+                        </div>
+                        <div class="time-info" v-if="dataTime">
+                            <span class="time-text">{{ dataTime }}</span>
+                        </div>
                         <div class="shard-info">
                             <el-icon><Location /></el-icon>
                             <span class="shard-text">{{ shardName }}</span>
@@ -85,6 +103,18 @@
                             <el-button @click="downloadData" type="success" size="small">
                                 下载数据
                             </el-button>
+                            <el-upload
+                                class="upload-demo"
+                                :show-file-list="false"
+                                :before-upload="beforeUpload"
+                                :on-success="handleUploadSuccess"
+                                :on-error="handleUploadError"
+                                accept=".ts,.js,.json"
+                                action="#"
+                                :http-request="handleUploadRequest"
+                            >
+                                <el-button type="warning" size="small"> 上传数据 </el-button>
+                            </el-upload>
                             <!-- 时间区间预设下拉框 -->
                             <div class="time-range-selector">
                                 <el-select
@@ -129,8 +159,14 @@
                         </div>
                     </div>
 
-                    <!-- 右侧：shard 信息 -->
+                    <!-- 右侧：数据时间和shard信息 -->
                     <div class="right-info">
+                        <div class="tick-info" v-if="dataTick">
+                            <span class="tick-text">{{ dataTick }}</span>
+                        </div>
+                        <div class="time-info" v-if="dataTime">
+                            <span class="time-text">{{ dataTime }}</span>
+                        </div>
                         <div class="shard-info">
                             <el-icon><Location /></el-icon>
                             <span class="shard-text">{{ shardName }}</span>
@@ -151,6 +187,18 @@
                             <el-button @click="downloadData" type="success" size="small">
                                 下载数据
                             </el-button>
+                            <el-upload
+                                class="upload-demo"
+                                :show-file-list="false"
+                                :before-upload="beforeUpload"
+                                :on-success="handleUploadSuccess"
+                                :on-error="handleUploadError"
+                                accept=".ts,.js,.json"
+                                action="#"
+                                :http-request="handleUploadRequest"
+                            >
+                                <el-button type="warning" size="small"> 上传数据 </el-button>
+                            </el-upload>
                             <!-- 时间区间预设下拉框 -->
                             <div class="time-range-selector">
                                 <el-select
@@ -179,8 +227,14 @@
                         </div>
                     </div>
 
-                    <!-- 右侧：shard 信息 -->
+                    <!-- 右侧：数据时间和shard信息 -->
                     <div class="right-info">
+                        <div class="tick-info" v-if="dataTick">
+                            <span class="tick-text">{{ dataTick }}</span>
+                        </div>
+                        <div class="time-info" v-if="dataTime">
+                            <span class="time-text">{{ dataTime }}</span>
+                        </div>
                         <div class="shard-info">
                             <el-icon><Location /></el-icon>
                             <span class="shard-text">{{ shardName }}</span>
@@ -197,7 +251,9 @@ import { ref, computed, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useAppStore } from "@/stores/app";
 import { House, View, Location, DataAnalysis } from "@element-plus/icons-vue";
+import { ElMessage } from "element-plus";
 import { getAllPresets, type TimeRangePreset } from "@/utils/chartPresets";
+import type { OriginScreepsData } from "AI/AIUreium/ui/type";
 
 const router = useRouter();
 const route = useRoute();
@@ -274,6 +330,19 @@ const chartRefs = ref<Map<string, { applyTimeRangePreset: (preset: TimeRangePres
 const shardName = computed(() => {
     if (!screepsData.value?.shardData) return "";
     return screepsData.value.shardData.shardName;
+});
+
+// 数据tick
+const dataTick = computed(() => {
+    if (!screepsData.value?.timeData) return "";
+    return `Tick: ${screepsData.value.timeData.tick}`;
+});
+
+// 数据时间
+const dataTime = computed(() => {
+    if (!screepsData.value?.timeData) return "";
+    const date = new Date(screepsData.value.timeData.time);
+    return date.toLocaleString();
 });
 
 // 可用房间列表
@@ -384,6 +453,136 @@ export const testData: OriginScreepsData = ${JSON.stringify(screepsData.value)} 
         console.error("下载数据时出错:", error);
     }
 };
+
+// 上传数据方法（保留但标记为未使用，以备后用）
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const openUploadDialog = (): void => {
+    // 创建文件输入元素
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".ts,.js,.json";
+
+    // 监听文件选择
+    input.onchange = async (event) => {
+        const file = (event.target as HTMLInputElement).files?.[0];
+        if (!file) return;
+
+        try {
+            const content = await file.text();
+            await loadUploadedData(content);
+        } catch (error) {
+            console.error("上传数据时出错:", error);
+            ElMessage.error("上传数据失败，请检查文件格式");
+        }
+    };
+
+    // 触发文件选择
+    input.click();
+};
+
+// Element Plus Upload 组件相关方法
+const beforeUpload = (file: File): boolean => {
+    const allowedTypes = [".ts", ".js", ".json"];
+    const fileExtension = file.name.substring(file.name.lastIndexOf(".")).toLowerCase();
+
+    if (!allowedTypes.includes(fileExtension)) {
+        ElMessage.warning("请上传 .ts、.js 或 .json 格式的文件");
+        return false;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+        // 10MB限制
+        ElMessage.warning("文件大小不能超过10MB");
+        return false;
+    }
+
+    return true;
+};
+
+const handleUploadRequest = async (options: {
+    file: File;
+    onSuccess: (response: unknown) => void;
+    onError: (error: Error) => void;
+}): Promise<void> => {
+    const { file, onSuccess, onError } = options;
+
+    try {
+        const content = await readFileAsText(file);
+        await loadUploadedData(content);
+        onSuccess("上传成功");
+    } catch (error) {
+        console.error("上传失败:", error);
+        onError(error instanceof Error ? error : new Error(String(error)));
+    }
+};
+
+const handleUploadSuccess = (response: unknown, file: File): void => {
+    console.log("文件上传成功:", file.name);
+};
+
+const handleUploadError = (error: Error): void => {
+    console.error("文件上传失败:", error);
+    ElMessage.error(`上传失败：${error.message || "未知错误"}`);
+};
+
+// 读取文件为文本
+const readFileAsText = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            resolve(event.target?.result as string);
+        };
+        reader.onerror = (error) => {
+            reject(error);
+        };
+        reader.readAsText(file);
+    });
+};
+
+// 加载上传的数据
+const loadUploadedData = async (content: string): Promise<void> => {
+    try {
+        // 尝试解析上传的文件内容
+        let data: OriginScreepsData;
+
+        // 检查是否是 TypeScript 模块格式
+        if (content.includes("export const testData")) {
+            // 提取 testData 的值
+            const match = content.match(/export const testData: OriginScreepsData = (.*?);/s);
+            if (match && match[1]) {
+                // 移除末尾的 "as unknown as OriginScreepsData"
+                const dataStr = match[1].replace(/\s+as unknown as OriginScreepsData\s*$/, "");
+                data = JSON.parse(dataStr);
+            } else {
+                throw new Error("无法从 TypeScript 文件中提取 testData");
+            }
+        } else {
+            // 尝试直接解析为 JSON
+            data = JSON.parse(content);
+        }
+
+        // 验证数据格式
+        if (!data.type || data.type !== "OriginScreepsData") {
+            throw new Error("无效的数据格式：缺少 OriginScreepsData 类型标识");
+        }
+
+        // 更新 store 中的数据
+        appStore.setScreepsData(data);
+        console.log("数据上传成功并已加载", data);
+
+        // 显示成功消息
+        ElMessage.success("数据上传成功！");
+
+        // 如果当前在房间页面，自动选择第一个房间
+        if (isRoomPage.value && data.roomData && Object.keys(data.roomData).length > 0) {
+            const firstRoom = Object.keys(data.roomData)[0];
+            selectedRoom.value = firstRoom || null;
+        }
+    } catch (error) {
+        console.error("解析上传数据时出错:", error);
+        ElMessage.error(`解析数据失败：${error instanceof Error ? error.message : "未知错误"}`);
+    }
+};
 </script>
 
 <style scoped>
@@ -452,6 +651,30 @@ export const testData: OriginScreepsData = ${JSON.stringify(screepsData.value)} 
 .right-info {
     display: flex;
     align-items: center;
+}
+
+.tick-info {
+    margin-right: 16px;
+    padding-right: 16px;
+    border-right: 1px solid #e1e8ed;
+}
+
+.tick-text {
+    font-size: 14px;
+    font-weight: 500;
+    color: #606266;
+}
+
+.time-info {
+    margin-right: 16px;
+    padding-right: 16px;
+    border-right: 1px solid #e1e8ed;
+}
+
+.time-text {
+    font-size: 14px;
+    font-weight: 500;
+    color: #606266;
 }
 
 .shard-info {
