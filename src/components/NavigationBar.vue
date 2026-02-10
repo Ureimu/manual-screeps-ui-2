@@ -449,8 +449,10 @@ export const testData: OriginScreepsData = ${JSON.stringify(screepsData.value)} 
         URL.revokeObjectURL(url);
 
         console.log("数据下载成功");
+        ElMessage.success("数据下载成功！");
     } catch (error) {
         console.error("下载数据时出错:", error);
+        ElMessage.error("下载数据失败");
     }
 };
 
