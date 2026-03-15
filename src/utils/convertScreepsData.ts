@@ -36,7 +36,9 @@ export function convertScreepsData(originData: OriginScreepsData): ScreepsData {
         timeGetter() {
             return tick++;
         },
-        segmentManager: new TimeSeriesSegmentManager(originData.rawTimeSeriesData),
+        segmentManager: new TimeSeriesSegmentManager(
+            originData.rawTimeSeriesData.map((i) => decodeURIComponent(i)),
+        ),
         timeData() {
             return originData.statsEngineData;
         },
