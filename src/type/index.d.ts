@@ -146,34 +146,10 @@ declare module "utils/ErrorMapper/type" {
         tick: number;
     }
 }
-declare module "utils/TimeSeriesData/type" {
-    export type SingleTypedTreeDataNode<T> = T | SingleTypedTreeDataRecord<T>;
-    export interface SingleTypedTreeDataRecord<T> extends Record<
-        string,
-        SingleTypedTreeDataNode<T>
-    > {}
-    export type SingleTypedTreeData<T> = Record<string, SingleTypedTreeDataNode<T>> & {
-        timeStamp?: T;
-        gameTime?: T;
-    };
-    export interface SingleData<T extends (number | null)[] | string | number> {
-        data: T;
-        type: string;
-        depth: number;
-        /**
-         * 指示该数据在使用时需要乘以10的多少次方。
-         */
-        exp?: number;
-        mutations?: T extends number[] | string
-            ? [mutationIndex: number, size: number][]
-            : undefined;
-    }
-}
 declare module "AI/AIUreium/control/outwardsSource/type" {
-    export interface RoomStatusOutwardsSource {
+    export interface RoomStatusRemoteResource {
         lastRunTime: number;
-        isRunning: boolean;
-        sources: {
+        resources: {
             [name: string]: {
                 isInUse: boolean;
                 isChosen: boolean;
@@ -183,7 +159,7 @@ declare module "AI/AIUreium/control/outwardsSource/type" {
         };
     }
     export interface RoomStatusData {
-        outwardsSource?: RoomStatusOutwardsSource;
+        remoteResource?: RoomStatusRemoteResource;
     }
 }
 declare module "utils/typeUtils/index" {
@@ -220,6 +196,7 @@ declare module "utils/typeUtils/index" {
                     : T; /** FALLBACK TO ITSELF IF NOT HANDLED */
 }
 declare module "utils/constants/resources" {
+    export const baseResource: readonly ["energy", "power", "ops"];
     export const mineralResource: readonly ["H", "O", "U", "L", "K", "Z", "X"];
     export const compound0Resource: readonly ["OH", "ZK", "UL"];
     export const compound0p5Resource: readonly ["G"];
@@ -350,37 +327,33 @@ declare module "AI/AIUreium/config/roomResources/type" {
         storage: StorageStructureResourceLimit;
         terminal: TerminalStructureResourceLimit;
     }
+    type capacityType = "max" | "min";
+    type terminalConfigType = "maxBuyPrice" | "minSellPrice" | "buy" | "sell" | "send";
+    type labConfigType = "reactionGoal" | "reactionPriority" | "reactionBatchAmount";
     export type StorageStructureResourceLimit = {
-        [name in ResourceConstant]: Pick<SingleResourceLimit, "max" | "min"> &
-            (name extends MineralCompoundConstant
-                ? Pick<
-                      SingleResourceLimit,
-                      "reactionGoal" | "reactionPriority" | "reactionBatchAmount"
-                  >
-                : {});
+        [name in ResourceConstant]: Pick<SingleResourceLimit, capacityType> &
+            (name extends MineralCompoundConstant ? Pick<SingleResourceLimit, labConfigType> : {});
     };
     export type TerminalStructureResourceLimit = {
-        [name in ResourceConstant]: Pick<
-            SingleResourceLimit,
-            "max" | "min" | "maxBuyPrice" | "minSellPrice"
-        >;
+        [name in ResourceConstant]: Pick<SingleResourceLimit, capacityType | terminalConfigType>;
     };
     export type TerminalStructureResourceLimitWithoutCapacity = {
-        [name in ResourceConstant]: Pick<SingleResourceLimit, "maxBuyPrice" | "minSellPrice">;
+        [name in ResourceConstant]: Pick<SingleResourceLimit, terminalConfigType>;
     };
     export interface SingleResourceLimit {
         /**
          * 资源最高数量。
          *
          * * 对于storage，用于控制是否向terminal放入资源。
-         * * 对于terminal，用于控制是否卖出。
+         * * 当storage和terminal总资源量大于storage和terminal该值之和乘以比率（roomConfig.market.sellLimitRate）时，开始卖出。
+         * * 当storage和terminal总资源量大于storage和terminal该值之和乘以比率（roomConfig.market.sendLimitRate）时，开始向自己的其他terminal发送资源。
          */
         max: number;
         /**
          * 资源最低数量。
          *
-         * * 对于storage，用于控制是否从terminal拿取资源，是否合成。
-         * * 对于terminal，用于控制是否买入。
+         * * 对于storage，用于控制是否从terminal拿取资源。
+         * * 当storage和terminal总资源量小于storage和terminal该值之和乘以比率（roomConfig.market.buyLimitRate）时，开始买入。
          */
         min: number;
         /**
@@ -413,6 +386,18 @@ declare module "AI/AIUreium/config/roomResources/type" {
          * 单次合成任务的化合物合成数量。
          */
         reactionBatchAmount: number;
+        /**
+         * 是否允许买入。
+         */
+        buy: boolean;
+        /**
+         * 是否允许卖出。
+         */
+        sell: boolean;
+        /**
+         * 是否允许发送到其他自己的terminal。
+         */
+        send: boolean;
     }
     export type ResourceType<T extends readonly ResourceConstant[]> = T extends readonly (infer U)[]
         ? U
@@ -436,6 +421,160 @@ declare module "utils/log4screeps/type" {
         info: number;
         warning: number;
         error: number;
+    };
+}
+declare module "utils/constants/staticObject" {
+    export type StaticObjects = "source" | "mineral" | "controller" | "keeperLair";
+}
+declare module "AI/AIUreium/control/maintain/powerCreep/type" {
+    /** 指powerCreep更新寿命任务。 */
+    export const PC_RENEW = -1;
+    /** 指powerCreep更新寿命任务。 */
+    export type PC_RENEW = -1;
+    /** 指powerCreep启用房间的power任务。 */
+    export const PC_ENABLE_POWER = -2;
+    /** 指powerCreep启用房间的power任务。 */
+    export type PC_ENABLE_POWER = -2;
+    /** 指powerCreep孵化任务。 */
+    export const PC_SPAWN = -3;
+    /** 指powerCreep孵化任务。 */
+    export type PC_SPAWN = -3;
+    /** 指powerCreep取出ops任务。 */
+    export const PC_WITHDRAW_OPS = -4;
+    /** 指powerCreep取出ops任务。 */
+    export type PC_WITHDRAW_OPS = -4;
+    /** 指powerCreep放入ops任务。 */
+    export const PC_TRANSFER_OPS = -5;
+    /** 指powerCreep放入ops任务。 */
+    export type PC_TRANSFER_OPS = -5;
+    export type PCTaskEnum =
+        | PC_RENEW
+        | PC_ENABLE_POWER
+        | PC_SPAWN
+        | PC_WITHDRAW_OPS
+        | PC_TRANSFER_OPS;
+    export type PowerTaskTypeEnum = PowerConstant | PCTaskEnum;
+    export const PowerTaskTypeIndexToNameMap: {
+        [powerIndex in PowerTaskTypeEnum]: string;
+    };
+    export const POWER_TASK_ENUM_LIST: PowerTaskTypeEnum[];
+    export const PowerEnumMapToTargetStructureTypeList: {
+        readonly [-1]: ["powerSpawn", "powerBank"];
+        readonly [-3]: ["powerSpawn"];
+        readonly [-4]: ["storage"];
+        readonly [-5]: ["storage"];
+        readonly 2: ["spawn"];
+        readonly 3: ["tower"];
+        readonly 4: ["storage"];
+        readonly 5: ["lab"];
+        readonly 6: ["storage", "terminal"];
+        readonly 7: ["observer"];
+        readonly 8: ["terminal"];
+        readonly 16: ["powerSpawn"];
+        readonly 17: ["rampart", "constructedWall"];
+        readonly 19: ["factory"];
+        readonly 9: ["spawn"];
+        readonly 10: ["tower"];
+        readonly 15: ["terminal"];
+    };
+    export const PowerEnumMapToTargetStaticObjectTypeList: {
+        readonly [-2]: ["controller"];
+        readonly 18: ["controller"];
+        readonly 13: ["source"];
+        readonly 14: ["mineral"];
+        readonly 11: ["source"];
+    };
+    export interface PowerCreepTask {
+        taskName: string;
+        targetId: string;
+        targetPosStr: string;
+        powerTaskEnum: PowerTaskTypeEnum;
+        targetName: string;
+        pcName?: string;
+        priority: number;
+        effectEndTick: number;
+        disposableTask?: boolean;
+    }
+    export type AddPowerCreepTaskArgs = {
+        taskName: string;
+        powerTaskEnum: PowerTaskTypeEnum;
+        priority: number;
+        /**
+         * 将该任务分配给的powerCreep的名称。可选。
+         */
+        pcName?: string;
+        /**
+         * 是否是一次性任务。
+         */
+        disposableTask?: boolean;
+    } & (
+        | AddPowerCreepNoTargetTaskArgs
+        | AddPowerCreepStaticTargetTaskArgs
+        | AddPowerCreepMyStructureTargetTaskArgs
+        | AddPowerCreepPosTargetTaskArgs
+        | AddPowerCreepEnemyStructureTargetTaskArgs
+    );
+    export type PowerTaskNoTargetTypeEnum = PWR_GENERATE_OPS;
+    type AddPowerCreepNoTargetTaskArgs = {
+        powerTaskEnum: PowerTaskNoTargetTypeEnum;
+    };
+    export type PowerTaskStaticTargetTypeEnum =
+        | PC_ENABLE_POWER
+        | PWR_OPERATE_CONTROLLER
+        | PWR_REGEN_SOURCE
+        | PWR_REGEN_MINERAL
+        | PWR_DISRUPT_SOURCE;
+    type AddPowerCreepStaticTargetTaskArgs = {
+        powerTaskEnum: PowerTaskStaticTargetTypeEnum;
+        targetName: string;
+    };
+    export type PowerTaskMyStructureTargetTypeEnum =
+        | PC_RENEW
+        | PC_SPAWN
+        | PC_WITHDRAW_OPS
+        | PC_TRANSFER_OPS
+        | PWR_OPERATE_SPAWN
+        | PWR_OPERATE_TOWER
+        | PWR_OPERATE_STORAGE
+        | PWR_OPERATE_LAB
+        | PWR_OPERATE_EXTENSION
+        | PWR_OPERATE_OBSERVER
+        | PWR_OPERATE_TERMINAL
+        | PWR_OPERATE_POWER
+        | PWR_FORTIFY
+        | PWR_OPERATE_FACTORY;
+    type AddPowerCreepMyStructureTargetTaskArgs = {
+        powerTaskEnum: PowerTaskMyStructureTargetTypeEnum;
+        structureId: string;
+    };
+    export const PowerTaskMyStructureTargetTypeList: [
+        -1,
+        -3,
+        -4,
+        -5,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        16,
+        17,
+        19,
+    ];
+    export type PowerTaskPosTargetTypeEnum = PWR_SHIELD;
+    type AddPowerCreepPosTargetTaskArgs = {
+        powerTaskEnum: PowerTaskPosTargetTypeEnum;
+        targetPosStr: string;
+    };
+    export type PowerTaskEnemyStructureTargetTypeEnum =
+        | PWR_DISRUPT_SPAWN
+        | PWR_DISRUPT_TOWER
+        | PWR_DISRUPT_TERMINAL;
+    type AddPowerCreepEnemyStructureTargetTaskArgs = {
+        powerTaskEnum: PowerTaskEnemyStructureTargetTypeEnum;
+        targetPosStr: string;
     };
 }
 declare module "AI/AIUreium/config/type" {
@@ -547,6 +686,18 @@ declare module "AI/AIUreium/config/type" {
              */
             minFreeCpu: number;
         };
+        powerCreeps: {
+            /**
+             * power creep的设定。
+             */
+            creepConfigs: {
+                [name: string]: SinglePowerCreepConfig;
+            };
+            /**
+             * 是否使用powerCreep。
+             */
+            run: boolean;
+        };
     }
     export interface RoomConfig {
         /**
@@ -586,7 +737,12 @@ declare module "AI/AIUreium/config/type" {
             /**
              * 是否进行mineral采集。
              */
-            run: boolean;
+            run: "stop" | "start" | "ifHasFreeCapacity";
+            /**
+             * 该值乘以roomConfig.resources[mineralType].max即为，
+             * "ifHasFreeCapacity"计算条件时，该mineralType的最大capacity。
+             */
+            capacityRate: number;
         };
         /**
          * 占新房间设定。
@@ -600,7 +756,7 @@ declare module "AI/AIUreium/config/type" {
         /**
          * 外矿采集设定。
          */
-        outwardsSource: {
+        remoteResource: {
             /**
              * 是否进行外矿采集。
              */
@@ -616,9 +772,26 @@ declare module "AI/AIUreium/config/type" {
              */
             rooms: string[];
             /**
+             * 允许采集矿物的房间列表。只能采集中央九房的矿物。
+             */
+            mineralRooms: string[];
+            /**
              * 允许的最大source数量。
              */
             sourceAmount: number;
+            /**
+             * 允许的最大mineral数量。
+             */
+            mineralAmount: number;
+            /**
+             * 是否进行mineral采集。
+             */
+            mineralRun: "stop" | "start" | "ifHasFreeCapacity";
+            /**
+             * 该值乘以roomConfig.resources[mineralType].max即为，
+             * "ifHasFreeCapacity"计算条件时，该mineralType的最大capacity。
+             */
+            mineralCapacityRate: number;
             /**
              * 开始外矿作业的能量比率。
              *
@@ -686,6 +859,12 @@ declare module "AI/AIUreium/config/type" {
              */
             minimumStorageEnergyToReboot: number;
             /**
+             * 启动更多矿物挖掘所需的，storage的最低能量值。
+             *
+             * 如果低于该值，则不会启动更多矿物挖掘。已经启动的矿物挖掘不会停止。
+             */
+            minimumStorageEnergyToRebootMineral: number;
+            /**
              * 外矿运作所需的，storage的最低能量值。
              *
              * 如果低于该值，已经启动的外矿也会停止。
@@ -699,31 +878,37 @@ declare module "AI/AIUreium/config/type" {
          */
         market: {
             /**
-             * 是否购买能量。
-             */
-            buyEnergy: boolean;
-            /**
-             * 是否卖出能量。
-             */
-            sellEnergy: boolean;
-            /**
              * 交易处理速率。
              */
             dealRate: number;
             /**
+             * 休眠时的交易处理速率倍率。
+             *
+             * 当没有任务需要处理时，会进入休眠状态。
+             *
+             * 此时的交易处理速率为dealRate乘以该值。
+             */
+            inactiveDealRateMultiplier: number;
+            /**
              * 开始deal订单的最低storage能量值。
              */
-            minStorageEnergyToStartDealing: number;
+            minTerminalEnergyToStartDealing: number;
+            /**
+             * 物资数量的发送限制比率。
+             *
+             * 当storage和terminal的总物资数量大于storage和terminal的总物资数量最大值乘以该比率时，就会自动尝试发送该物资到自己的其他terminal。
+             */
+            sendLimitRate: number;
             /**
              * 物资数量的卖出限制比率。
              *
-             * 当storage的物资数量大于storage的物资数量最大值乘以该比率时，就会自动尝试卖出该物资。
+             * 当storage和terminal的总物资数量大于storage和terminal的总物资数量最大值乘以该比率时，就会自动尝试卖出该物资。
              */
             sellLimitRate: number;
             /**
              * 物资数量的买入限制比率。
              *
-             * 当storage的物资数量小于storage的物资数量最小值乘以该比率时，就会自动尝试买入该物资。
+             * 当storage和terminal的总物资数量小于storage和terminal的总物资数量最小值乘以该比率时，就会自动尝试买入该物资。
              */
             buyLimitRate: number;
             /**
@@ -824,6 +1009,18 @@ declare module "AI/AIUreium/config/type" {
              * 是否自动为了防核而修墙。
              */
             defendNuke: boolean;
+            /**
+             * 是否无视房间等级限制进行墙的修理。
+             */
+            ignoreRcl: boolean;
+            /**
+             * 要维持多少个刷墙creep。
+             */
+            creepAmount: number;
+            /**
+             * 距离上次选定目标时，已刷的hits大于该设定值时，会切换到下一个刷墙目标。
+             */
+            switchTargetHits: number;
         };
         scoutRoom: {
             /**
@@ -946,15 +1143,49 @@ declare module "AI/AIUreium/config/type" {
             [level in 1 | 2 | 3 | 4 | 5]: boolean;
         };
     }
+    export interface SinglePowerCreepConfig {
+        /**
+         * 是否孵化。为false则会使creep suicide。
+         */
+        run: boolean;
+        powers: {
+            [powerIndex: number]: {
+                /**
+                 * 是否启用power。
+                 */
+                run: boolean;
+                /**
+                 * rooms设置优先级更高。
+                 *
+                 * 当含有对应房间名时，会使用该房间内的该power对应的所有可见的对应类型object作为参数，
+                 * 并覆盖掉objects内对应房间的参数。
+                 */
+                rooms: string[];
+                /**
+                 * objects设置优先级低于rooms。
+                 *
+                 * 对于objects，分为下面几种情况。
+                 * * 对于static object任务，直接写flag名称。
+                 * * 对于my room object任务，直接写位置字符串。
+                 * * 对于位置任务，直接写位置字符串。
+                 */
+                objects: string[];
+            };
+        };
+    }
 }
 declare module "AI/AIUreium/ui/type" {
     import { creepBodyConfigDetail } from "frame/creep/body/type";
     import { CreepGroupMemory, CreepGroupMode } from "frame/creep/group/type";
     import { SpawnCreepDetail } from "frame/spawn/spawnPool/type";
     import { ErrorSegmentMemory } from "utils/ErrorMapper/type";
-    import { SingleData, SingleTypedTreeDataRecord } from "utils/TimeSeriesData/type";
     import { RoomStatusData } from "AI/AIUreium/control/outwardsSource/type";
     import { ScreepsConfig } from "AI/AIUreium/config/type";
+    import {
+        SingleData,
+        SingleTypedTreeDataRecord,
+        TimeSeriesEngineData,
+    } from "screeps-timeseries/dist/src/type";
     export { ErrorSegmentMemory };
     /**
      * 该文件为ui库与本代码库共享的类型文件。
@@ -970,16 +1201,22 @@ declare module "AI/AIUreium/ui/type" {
      */
     export interface OriginScreepsData {
         type: "OriginScreepsData";
-        timeSeriesData: TimeSeriesStats<(number | null)[]> & {
-            timeStamp: SingleData<number[]>;
-            gameTime: SingleData<number[]>;
-        };
+        rawTimeSeriesData: string[];
         statsEngineStorage: {
             usedRatio: number;
             dataIncreaseSpeed: number;
             usedSegmentsNumber: number;
             maxSizePerSegment: number;
         };
+        statsEngineConfig: {
+            interval: number;
+            maxSegmentSize: number;
+            idList: number[];
+            mutationSize: number;
+            readDataBatchSize: number;
+            ifGatherData: boolean;
+        };
+        statsEngineData: TimeSeriesEngineData;
         timeData: {
             tick: number;
             time: number;
@@ -1039,6 +1276,10 @@ declare module "AI/AIUreium/ui/type" {
         };
         status?: RoomStatusData;
     }
+    export type TimeSeriesData = TimeSeriesStats<(number | null)[]> & {
+        timeStamp: SingleData<number[]>;
+        gameTime: SingleData<number[]>;
+    };
     export type TimeSeriesStats<T extends string | number | (number | null)[]> = {
         userData: {
             credits: SingleData<T>;

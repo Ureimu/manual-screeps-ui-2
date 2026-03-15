@@ -253,6 +253,7 @@ import { useAppStore } from "@/stores/app";
 import { House, View, Location, DataAnalysis } from "@element-plus/icons-vue";
 import { ElMessage } from "element-plus";
 import { getAllPresets, type TimeRangePreset } from "@/utils/chartPresets";
+import { convertScreepsData } from "@/utils/convertScreepsData";
 import type { OriginScreepsData } from "AI/AIUreium/ui/type";
 
 const router = useRouter();
@@ -569,7 +570,7 @@ const loadUploadedData = async (content: string): Promise<void> => {
         }
 
         // 更新 store 中的数据
-        appStore.setScreepsData(data);
+        appStore.setScreepsData(convertScreepsData(data));
         console.log("数据上传成功并已加载", data);
 
         // 显示成功消息

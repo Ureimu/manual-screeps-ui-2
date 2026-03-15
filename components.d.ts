@@ -13,10 +13,8 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     ComparableLineChart: typeof import('./src/components/echarts/ComparableLineChart.vue')['default']
-    ConfigNestedDisplay: typeof import('./src/components/config/ConfigNestedDisplay.vue')['default']
     ConfigObjectDisplay: typeof import('./src/components/config/displayType/ConfigObjectDisplay.vue')['default']
     ConfigResourcesDisplay: typeof import('./src/components/config/displayType/ConfigResourcesDisplay.vue')['default']
-    ConfigSimpleDisplay: typeof import('./src/components/config/ConfigSimpleDisplay.vue')['default']
     ConfigValueDisplay: typeof import('./src/components/config/displayType/ConfigValueDisplay.vue')['default']
     ElAlert: typeof import('element-plus/es')['ElAlert']
     ElButton: typeof import('element-plus/es')['ElButton']
@@ -62,10 +60,8 @@ declare module 'vue' {
 // For TSX support
 declare global {
   const ComparableLineChart: typeof import('./src/components/echarts/ComparableLineChart.vue')['default']
-  const ConfigNestedDisplay: typeof import('./src/components/config/ConfigNestedDisplay.vue')['default']
   const ConfigObjectDisplay: typeof import('./src/components/config/displayType/ConfigObjectDisplay.vue')['default']
   const ConfigResourcesDisplay: typeof import('./src/components/config/displayType/ConfigResourcesDisplay.vue')['default']
-  const ConfigSimpleDisplay: typeof import('./src/components/config/ConfigSimpleDisplay.vue')['default']
   const ConfigValueDisplay: typeof import('./src/components/config/displayType/ConfigValueDisplay.vue')['default']
   const ElAlert: typeof import('element-plus/es')['ElAlert']
   const ElButton: typeof import('element-plus/es')['ElButton']

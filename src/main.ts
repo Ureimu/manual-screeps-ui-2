@@ -2,7 +2,6 @@ import "./assets/main.css";
 
 import { createApp, type App as VueApp } from "vue";
 import { createPinia } from "pinia";
-import { decode } from "js-base64";
 
 import ElementPlus from "element-plus";
 import "element-plus/dist/index.css";
@@ -11,6 +10,7 @@ import App from "./App.vue";
 import router from "./router";
 import { useAppStore } from "./stores/app";
 import type { OriginScreepsData } from "AI/AIUreium/ui/type";
+import { convertScreepsData } from "./utils/convertScreepsData";
 
 // ==================== 渲染函数 ====================
 /**
@@ -21,7 +21,8 @@ function runRender(data: OriginScreepsData): void {
     console.log("开始渲染数据:", data);
     try {
         const appStore = useAppStore();
-        appStore.setScreepsData(data);
+
+        appStore.setScreepsData(convertScreepsData(data));
         console.log("数据已更新到 Pinia store");
     } catch (error) {
         console.error("渲染过程中出错:", error);
@@ -83,9 +84,8 @@ if (isDevelopment) {
             console.log("收到游戏数据:", fullData);
 
             if (typeof fullData === "string") {
-                // 如果数据是字符串，尝试进行Base64解码和JSON解析
-                const decodedData = decode(fullData);
-                const parsedData = JSON.parse(decodedData) as OriginScreepsData;
+                // 如果数据是字符串，尝试进行JSON解析
+                const parsedData = JSON.parse(fullData) as OriginScreepsData;
                 if (parsedData.type !== "OriginScreepsData") {
                     return;
                 }

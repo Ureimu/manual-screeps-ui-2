@@ -1,11 +1,11 @@
 import { ref, computed } from "vue";
 import { defineStore } from "pinia";
-import type { OriginScreepsData } from "AI/AIUreium/ui/type";
+import type { ScreepsData } from "@/type/screeps-data";
 import type { TimeRangePreset } from "@/utils/chartPresets";
 
 export const useAppStore = defineStore("app", () => {
     // 应用数据状态
-    const screepsData = ref<OriginScreepsData | null>(null);
+    const screepsData = ref<ScreepsData | null>(null);
 
     // 应用选项状态
     const options = ref({
@@ -23,7 +23,7 @@ export const useAppStore = defineStore("app", () => {
     const hasData = computed(() => screepsData.value !== null);
 
     // 方法：更新 screeps 数据
-    function setScreepsData(data: OriginScreepsData): void {
+    function setScreepsData(data: ScreepsData): void {
         screepsData.value = data;
     }
 
