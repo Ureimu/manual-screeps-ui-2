@@ -50,6 +50,9 @@ export function convertScreepsData(originData: OriginScreepsData): ScreepsData {
     while (!convertedData) {
         convertedData = statsEngine.readData(false);
     }
+
+    originData.userData.memoryString = decodeURIComponent(originData.userData.memoryString);
+
     return {
         ...originData,
         timeSeriesData: convertedData as unknown as TimeSeriesStats<(number | null)[]> & {
