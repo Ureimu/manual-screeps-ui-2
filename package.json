@@ -23,7 +23,7 @@
         "lodash": "^4.17.21",
         "mermaid": "^11.12.2",
         "pinia": "^3.0.4",
-        "screeps-timeseries": "^0.0.3",
+        "screeps-timeseries": "^0.0.7",
         "vue": "^3.5.26",
         "vue-router": "^4.6.4"
     },
