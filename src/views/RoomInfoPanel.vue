@@ -154,6 +154,32 @@
                 </el-col>
             </el-row>
 
+            <!-- spawnEnergy图表 -->
+            <el-row v-if="currentRoomName" :gutter="24" class="row-container chart-row">
+                <el-col :xs="24" :sm="24" :md="12" :lg="12">
+                    <div class="chart-wrapper">
+                        <FlexibleLineChart
+                            id="spawn-energy-chart"
+                            name="孵化能量"
+                            :timeData="screepsData.timeSeriesData?.timeStamp?.data"
+                            :gameTimeData="screepsData.timeSeriesData?.gameTime?.data"
+                            :yData="
+                                screepsData.timeSeriesData?.roomData?.[currentRoomName]?.spawnEnergy
+                                    ?.data
+                            "
+                            :exp="
+                                screepsData.timeSeriesData?.roomData?.[currentRoomName]?.spawnEnergy
+                                    ?.exp
+                            "
+                            :mode="'sum'"
+                            :interval="1500"
+                            :aggregateAxis="'tick'"
+                            :visible="true"
+                        />
+                    </div>
+                </el-col>
+            </el-row>
+
             <!-- 项目列表 -->
             <el-row v-if="currentRoomName" :gutter="24" class="row-container chart-row">
                 <el-col :xs="24" :sm="24" :md="24" :lg="24">

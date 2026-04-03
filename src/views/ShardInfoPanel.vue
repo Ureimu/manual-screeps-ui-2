@@ -116,6 +116,25 @@
                     </div>
                 </el-col>
             </el-row>
+
+            <!-- 房间spawnEnergy对比图 -->
+            <el-row :gutter="24" class="row-container chart-row">
+                <el-col :xs="24" :sm="24" :md="24" :lg="24">
+                    <div class="chart-wrapper">
+                        <ComparableLineChart
+                            id="room-spawnenergy-comparison-chart"
+                            name="房间spawnEnergy对比"
+                            :timeData="screepsData.timeSeriesData?.timeStamp?.data"
+                            :gameTimeData="screepsData.timeSeriesData?.gameTime?.data"
+                            :yDataList="roomSpawnEnergyData"
+                            :mode="'sum'"
+                            :interval="1500"
+                            :aggregateAxis="'tick'"
+                            :visible="true"
+                        />
+                    </div>
+                </el-col>
+            </el-row>
         </div>
 
         <!-- 无数据提示 -->
@@ -248,6 +267,27 @@ const roomSpawnTimeData = computed(() => {
     }
 
     return spawnTimeDataList;
+});
+
+// 获取所有房间的spawnEnergy数据
+const roomSpawnEnergyData = computed(() => {
+    if (!screepsData.value?.timeSeriesData?.roomData) return [];
+
+    const roomData = screepsData.value.timeSeriesData.roomData;
+    const spawnEnergyDataList = [];
+
+    // 遍历所有房间，获取spawnEnergy数据
+    for (const [roomName, roomTimeSeriesData] of Object.entries(roomData)) {
+        if (roomTimeSeriesData?.spawnEnergy?.data) {
+            spawnEnergyDataList.push({
+                name: roomName,
+                data: roomTimeSeriesData.spawnEnergy.data,
+                exp: roomTimeSeriesData.spawnEnergy.exp,
+            });
+        }
+    }
+
+    return spawnEnergyDataList;
 });
 </script>
 
