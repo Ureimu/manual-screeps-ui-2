@@ -9,7 +9,7 @@ import "element-plus/dist/index.css";
 import App from "./App.vue";
 import router from "./router";
 import { useAppStore } from "./stores/app";
-import type { OriginScreepsData } from "AI/AIUreium/ui/type";
+import type { OriginScreepsData } from "@/type/player/AI/AIUreium/ui/type";
 import { convertScreepsData } from "./utils/convertScreepsData";
 
 // ==================== 渲染函数 ====================

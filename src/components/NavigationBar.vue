@@ -254,7 +254,7 @@ import { House, View, Location, DataAnalysis } from "@element-plus/icons-vue";
 import { ElMessage } from "element-plus";
 import { getAllPresets, type TimeRangePreset } from "@/utils/chartPresets";
 import { convertScreepsData } from "@/utils/convertScreepsData";
-import type { OriginScreepsData } from "AI/AIUreium/ui/type";
+import type { OriginScreepsData } from "@/type/player/AI/AIUreium/ui/type";
 
 const router = useRouter();
 const route = useRoute();
@@ -429,7 +429,7 @@ const downloadData = (): void => {
 
     try {
         // 创建要下载的内容
-        const content = `import type { OriginScreepsData } from "AI/AIUreium/ui/type";
+        const content = `import type { OriginScreepsData } from "@/type/player/AI/AIUreium/ui/type";
 export const testData: OriginScreepsData = ${JSON.stringify(screepsData.value)} as unknown as OriginScreepsData;`;
 
         // 创建Blob对象

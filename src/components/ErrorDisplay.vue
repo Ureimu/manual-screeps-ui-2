@@ -106,7 +106,7 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import { ElMessage } from "element-plus";
-import type { ErrorSegmentMemory } from "utils/ErrorMapper/type";
+import type { ErrorSegmentMemory } from "@/type/player/utils/ErrorMapper/type";
 import {
     Warning,
     WarningFilled,

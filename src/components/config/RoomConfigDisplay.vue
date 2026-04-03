@@ -77,7 +77,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from "vue";
 import { Setting, Search, Filter } from "@element-plus/icons-vue";
-import type { ScreepsConfig, RoomConfig } from "AI/AIUreium/config/type";
+import type { ScreepsConfig, RoomConfig } from "@/type/player/AI/AIUreium/config/type";
 import ConfigObjectDisplay from "./displayType/ConfigObjectDisplay.vue";
 
 interface Props {

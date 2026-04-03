@@ -3,7 +3,7 @@
  * 用于将 OriginScreepsData 转换为 ScreepsData
  */
 
-import type { OriginScreepsData, TimeSeriesStats } from "AI/AIUreium/ui/type";
+import type { OriginScreepsData, TimeSeriesStats } from "@/type/player/AI/AIUreium/ui/type";
 import type { SingleTypedTreeData, SingleData } from "screeps-timeseries/dist/src/type";
 import type { ScreepsData } from "@/type/screeps-data";
 import { TimeSeriesSegmentManager, TimeSeriesDataEngine } from "screeps-timeseries";

@@ -292,7 +292,7 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import { Setting, Search, Filter } from "@element-plus/icons-vue";
-import type { ScreepsConfig } from "AI/AIUreium/config/type";
+import type { ScreepsConfig } from "@/type/player/AI/AIUreium/config/type";
 import {
     baseResource,
     mineralResource,

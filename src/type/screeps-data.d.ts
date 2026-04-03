@@ -1,4 +1,4 @@
-import type { OriginScreepsData, TimeSeriesData } from "AI/AIUreium/ui/type";
+import type { OriginScreepsData, TimeSeriesData } from "@/type/player/AI/AIUreium/ui/type";
 
 /**
  * ScreepsData 类型

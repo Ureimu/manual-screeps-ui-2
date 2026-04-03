@@ -193,7 +193,6 @@ import { ref, computed, onMounted, onUnmounted, nextTick, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ArrowLeft, Refresh, Minus, Plus } from "@element-plus/icons-vue";
 import mermaid from "mermaid";
-import { decode } from "js-base64";
 import { ElMessage } from "element-plus";
 import { useAppStore } from "@/stores/app";
 
@@ -346,10 +345,10 @@ async function renderMermaid(): Promise<void> {
         // 解码base64编码的mermaid代码
         let diagram = projectData.value.diagram;
         try {
-            diagram = decode(diagram);
+            diagram = decodeURIComponent(diagram);
         } catch {
-            // 如果解码失败，说明不是base64编码，使用原始字符串
-            console.log("Diagram is not base64 encoded, using as plain text");
+            // 如果解码失败，说明不是URI编码，使用原始字符串
+            console.log("Diagram is not URI encoded, using as plain text");
         }
 
         // 初始化mermaid配置
