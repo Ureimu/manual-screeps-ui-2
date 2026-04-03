@@ -22,7 +22,7 @@
 - 构建工具：Vite
 - 状态管理：Pinia ^3.0.4
 - 路由：Vue Router ^4.6.4
-- 工具库：lodash, mermaid, js-base64
+- 工具库：lodash, mermaid
 ```
 
 ---
