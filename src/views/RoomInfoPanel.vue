@@ -189,6 +189,18 @@
                 </el-col>
             </el-row>
 
+            <!-- 实验室任务历史 -->
+            <el-row v-if="currentRoomName" :gutter="24" class="row-container chart-row">
+                <el-col :xs="24" :sm="24" :md="24" :lg="24">
+                    <div class="chart-wrapper">
+                        <LabTaskHistoryDisplay
+                            :historyData="labTaskHistoryData"
+                            :roomName="currentRoomName"
+                        />
+                    </div>
+                </el-col>
+            </el-row>
+
             <!-- 外矿能量对比图 -->
             <el-row
                 v-if="currentRoomName && outwardsSourceData.length > 0"
@@ -231,6 +243,7 @@ import SunBurstResourceChart from "@/components/echarts/SunBurstResourceChart.vu
 import ProjectsDisplay from "@/components/ProjectsDisplay.vue";
 import RoomConfigDisplay from "@/components/config/RoomConfigDisplay.vue";
 import RoomResourceConfigDisplay from "@/components/config/RoomResourceConfigDisplay.vue";
+import LabTaskHistoryDisplay from "@/components/LabTaskHistoryDisplay.vue";
 
 // Pinia store
 const appStore = useAppStore();
@@ -323,6 +336,12 @@ const filteredProjectsData = computed(() => {
     });
 
     return filteredProjects;
+});
+
+// 获取实验室任务历史数据
+const labTaskHistoryData = computed(() => {
+    if (!screepsData.value?.historyData?.lab || !currentRoomName.value) return [];
+    return screepsData.value.historyData.lab[currentRoomName.value] || [];
 });
 
 // 切换坐标轴类型 - 现在由NavigationBar处理

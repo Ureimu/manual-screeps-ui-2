@@ -5,6 +5,7 @@ import { ErrorSegmentMemory } from "utils/ErrorMapper/type";
 import { RoomStatusData } from "../control/outwardsSource/type";
 import { ScreepsConfig } from "../config/type";
 import { SingleData, SingleTypedTreeDataRecord, TimeSeriesEngineData } from "screeps-timeseries";
+import { LabTaskHistory } from "../control/maintain/runLab/type";
 export { ErrorSegmentMemory };
 /**
  * 该文件为ui库与本代码库共享的类型文件。
@@ -67,6 +68,11 @@ export interface OriginScreepsData {
                     memory: Record<string, unknown>;
                 };
             };
+        };
+    };
+    historyData: {
+        lab: {
+            [roomName: string]: LabTaskHistory[];
         };
     };
     config: ScreepsConfig;

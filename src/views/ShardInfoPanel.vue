@@ -47,6 +47,18 @@
                 </el-col>
             </el-row>
 
+            <!-- 全局实验室任务历史 -->
+            <el-row :gutter="24" class="row-container">
+                <el-col :xs="24" :sm="24" :md="24" :lg="24">
+                    <div class="chart-wrapper">
+                        <LabTaskHistoryDisplay
+                            :historyData="globalLabTaskHistoryData"
+                            title="全局实验室任务历史"
+                        />
+                    </div>
+                </el-col>
+            </el-row>
+
             <!-- CPU 和 Bucket 折线图 -->
             <el-row :gutter="24" class="row-container chart-row">
                 <el-col :xs="24" :sm="24" :md="12" :lg="12">
@@ -154,6 +166,7 @@ import ComparableLineChart from "@/components/echarts/ComparableLineChart.vue";
 import SunBurstResourceChart from "@/components/echarts/SunBurstResourceChart.vue";
 import ErrorDisplay from "@/components/ErrorDisplay.vue";
 import ProjectsDisplay from "@/components/ProjectsDisplay.vue";
+import LabTaskHistoryDisplay from "@/components/LabTaskHistoryDisplay.vue";
 
 // Pinia store
 const appStore = useAppStore();
@@ -288,6 +301,28 @@ const roomSpawnEnergyData = computed(() => {
     }
 
     return spawnEnergyDataList;
+});
+
+// 获取全局实验室任务历史数据（所有房间）
+const globalLabTaskHistoryData = computed(() => {
+    if (!screepsData.value?.historyData?.lab) return [];
+
+    const labHistoryData = screepsData.value.historyData.lab;
+    const allHistoryData = [];
+
+    // 遍历所有房间，收集实验室任务历史数据
+    for (const [roomName, roomHistory] of Object.entries(labHistoryData)) {
+        if (Array.isArray(roomHistory)) {
+            // 为每个任务添加房间名称
+            const roomHistoryWithRoomName = roomHistory.map((task) => ({
+                ...task,
+                roomName: roomName,
+            }));
+            allHistoryData.push(...roomHistoryWithRoomName);
+        }
+    }
+
+    return allHistoryData;
 });
 </script>
 
