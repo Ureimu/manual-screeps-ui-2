@@ -60,8 +60,6 @@ if (isDevelopment) {
             if (module && module.testData) {
                 console.log("测试数据模块存在，加载测试数据...");
                 const fullData: OriginScreepsData = module.testData;
-                // 测试JSON兼容性
-                JSON.parse(JSON.stringify(fullData));
                 runRender(fullData);
                 console.log("测试数据加载完成");
             } else {

@@ -58,11 +58,17 @@ export type LabTask = {
     status: "ready" | "running";
     name: string;
     labList: Id<StructureLab>[];
+    /**
+     * 开始时间。-1为未开始。
+     */
     startTick: number;
 } & (LabTaskBoostCreep | LabTaskUnboostCreep | LabTaskRunReaction | LabTaskReverseReaction);
 export type LabTaskHistory = LabTask & {
     roomName: string;
     isFailed: boolean;
+    /**
+     * 结束时间。-1为未结束。
+     */
     endTick: number;
 };
 export type LabAddTaskArgs = {

@@ -7,13 +7,13 @@
                     <el-icon :size="16" color="#f56c6c">
                         <Warning />
                     </el-icon>
-                    错误数量: {{ errorData.messageList.length }}
+                    错误数量: {{ parsedErrorData.messageList.length }}
                 </span>
-                <span class="uncaught-count" v-if="errorData.uncaughtErrorNum > 0">
+                <span class="uncaught-count" v-if="parsedErrorData.uncaughtErrorNum > 0">
                     <el-icon :size="16" color="#e6a23c">
                         <WarningFilled />
                     </el-icon>
-                    未捕获错误: {{ errorData.uncaughtErrorNum }}
+                    未捕获错误: {{ parsedErrorData.uncaughtErrorNum }}
                 </span>
                 <span class="buffer-status" :class="getBufferStatusClass(bufferUsagePercentage)">
                     <el-icon :size="16" :color="getBufferIconColor(bufferUsagePercentage)">
@@ -27,7 +27,7 @@
         </header>
 
         <main class="error-main">
-            <div v-if="errorData.messageList.length > 0" class="error-list">
+            <div v-if="parsedErrorData.messageList.length > 0" class="error-list">
                 <div
                     v-for="error in sortedErrors"
                     :key="getErrorKey(error)"
@@ -122,7 +122,7 @@ import {
 
 interface Props {
     title?: string;
-    errorData: ErrorSegmentMemory;
+    errorData: string;
     currentTick?: number;
 }
 
@@ -131,16 +131,31 @@ const props = withDefaults(defineProps<Props>(), {
     currentTick: undefined,
 });
 
+// 解码并解析 errorData
+const parsedErrorData = computed(() => {
+    try {
+        const decodedString = decodeURIComponent(props.errorData);
+        return JSON.parse(decodedString) as ErrorSegmentMemory;
+    } catch (error) {
+        console.error("解析 errorData 失败:", error);
+        return {
+            messageList: [],
+            isFull: false,
+            uncaughtErrorNum: 0,
+        } as ErrorSegmentMemory;
+    }
+});
+
 // 计算缓冲区内存占用百分比
 const bufferUsagePercentage = computed(() => {
     try {
-        const jsonString = JSON.stringify(props.errorData);
+        const jsonString = JSON.stringify(parsedErrorData.value);
         const bytes = jsonString.length;
         const percentage = (bytes / (100 * 1024)) * 100;
         return Math.min(100, Math.round(percentage * 100) / 100);
     } catch (error) {
         console.error("计算缓冲区占用百分比失败:", error);
-        return props.errorData.isFull ? 100 : 0;
+        return parsedErrorData.value.isFull ? 100 : 0;
     }
 });
 
@@ -175,9 +190,9 @@ const expandedErrors = ref<Set<string>>(new Set());
 
 // 按最后发生时间排序的错误列表（从新到旧）
 const sortedErrors = computed(() => {
-    if (!props.errorData?.messageList) return [];
+    if (!parsedErrorData.value?.messageList) return [];
 
-    return [...props.errorData.messageList].sort((a, b) => {
+    return [...parsedErrorData.value.messageList].sort((a, b) => {
         // 获取每个错误的最后发生时间（最大tick值）
         const ticksA = a.ticks || [];
         const ticksB = b.ticks || [];
