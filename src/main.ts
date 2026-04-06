@@ -85,7 +85,7 @@ if (isDevelopment) {
 
             if (typeof fullData === "string") {
                 // 如果数据是字符串，尝试进行JSON解析
-                const parsedData = JSON.parse(fullData) as OriginScreepsData;
+                const parsedData = JSON.parse(decodeURIComponent(fullData)) as OriginScreepsData;
                 if (parsedData.type !== "OriginScreepsData") {
                     return;
                 }
