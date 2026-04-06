@@ -284,7 +284,7 @@
                                 <el-descriptions-item label="产物实验室">
                                     {{ selectedTask.productLabs?.length || 0 }} 个
                                 </el-descriptions-item>
-                                <el-descriptions-item label="结束时清理实验室">
+                                <el-descriptions-item label="是否正在任务完成后清理lab">
                                     {{ selectedTask.isClearingLabsOnEnd ? "是" : "否" }}
                                 </el-descriptions-item>
                             </el-descriptions>
@@ -321,7 +321,7 @@
                                 <el-descriptions-item label="产物实验室">
                                     {{ selectedTask.productLabs?.length || 0 }} 个
                                 </el-descriptions-item>
-                                <el-descriptions-item label="结束时清理实验室">
+                                <el-descriptions-item label="是否正在任务完成后清理lab">
                                     {{ selectedTask.isClearingLabsOnEnd ? "是" : "否" }}
                                 </el-descriptions-item>
                             </el-descriptions>
