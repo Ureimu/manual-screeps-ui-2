@@ -493,12 +493,6 @@ const beforeUpload = (file: File): boolean => {
         return false;
     }
 
-    if (file.size > 10 * 1024 * 1024) {
-        // 10MB限制
-        ElMessage.warning("文件大小不能超过10MB");
-        return false;
-    }
-
     return true;
 };
 
@@ -555,7 +549,7 @@ const loadUploadedData = async (content: string): Promise<void> => {
             if (match && match[1]) {
                 // 移除末尾的 "as unknown as OriginScreepsData"
                 const dataStr = match[1].replace(/\s+as unknown as OriginScreepsData\s*$/, "");
-                data = JSON.parse(dataStr);
+                data = JSON.parse(decodeURIComponent(dataStr));
             } else {
                 throw new Error("无法从 TypeScript 文件中提取 testData");
             }
