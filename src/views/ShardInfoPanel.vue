@@ -1,161 +1,187 @@
 <template>
-    <div class="shard-info-container">
-        <div v-if="screepsData" class="panel-main">
-            <!-- 第一行：数据库信息和全局资源分布图 -->
-            <el-row :gutter="0" class="row-container first-row">
-                <el-col :xs="24" :sm="24" :md="12" :lg="12" class="left-column">
-                    <el-row :gutter="24" class="inner-row-container full-height">
+    <div class="panel-with-sidebar">
+        <PanelSidebar
+            title="分片面版"
+            :categories="sidebarCategories"
+            :activeCategory="activeCategory"
+            @select="scrollToCategory"
+        />
+        <div ref="mainContentRef" class="panel-main-content">
+            <div v-if="screepsData" class="panel-main">
+                <!-- 数据库信息 / 资源分布 -->
+                <div ref="databaseRef" class="section-anchor">
+                    <el-row :gutter="0" class="row-container first-row">
+                        <el-col :xs="24" :sm="24" :md="12" :lg="12" class="left-column">
+                            <el-row :gutter="24" class="inner-row-container full-height">
+                                <el-col :xs="24" :sm="24" :md="24" :lg="24">
+                                    <div class="info-section">
+                                        <TextContainer
+                                            title="数据库信息"
+                                            :msg="storageUsedRatioMessages"
+                                        />
+                                    </div>
+                                </el-col>
+                            </el-row>
+                        </el-col>
+                        <el-col :xs="24" :sm="24" :md="12" :lg="12" class="right-column">
+                            <el-row :gutter="24" class="inner-row-container full-height">
+                                <el-col :xs="24" :sm="24" :md="24" :lg="24">
+                                    <div class="chart-section">
+                                        <SunBurstResourceChart
+                                            id="global-resource-chart"
+                                            name="全局资源分布"
+                                            :roomData="globalStoreData"
+                                            :visible="true"
+                                        />
+                                    </div>
+                                </el-col>
+                            </el-row>
+                        </el-col>
+                    </el-row>
+                </div>
+
+                <!-- 错误信息 -->
+                <div ref="errorsRef" class="section-anchor">
+                    <el-row :gutter="24" class="row-container">
                         <el-col :xs="24" :sm="24" :md="24" :lg="24">
-                            <div class="info-section">
-                                <TextContainer title="数据库信息" :msg="storageUsedRatioMessages" />
+                            <ErrorDisplay
+                                title="游戏错误信息"
+                                :errorData="screepsData.userData.error"
+                                :currentTick="screepsData.timeData.tick"
+                            />
+                        </el-col>
+                    </el-row>
+                </div>
+
+                <!-- 项目列表 -->
+                <div ref="projectsRef" class="section-anchor">
+                    <el-row :gutter="24" class="row-container">
+                        <el-col :xs="24" :sm="24" :md="24" :lg="24">
+                            <ProjectsDisplay :projectsData="screepsData.globalData?.projects" />
+                        </el-col>
+                    </el-row>
+                </div>
+
+                <!-- 实验室任务历史 -->
+                <div ref="labHistoryRef" class="section-anchor">
+                    <el-row :gutter="24" class="row-container">
+                        <el-col :xs="24" :sm="24" :md="24" :lg="24">
+                            <div class="chart-wrapper">
+                                <LabTaskHistoryDisplay
+                                    :historyData="globalLabTaskHistoryData"
+                                    title="全局实验室任务历史"
+                                />
                             </div>
                         </el-col>
                     </el-row>
-                </el-col>
-                <el-col :xs="24" :sm="24" :md="12" :lg="12" class="right-column">
-                    <el-row :gutter="24" class="inner-row-container full-height">
-                        <!-- 全局资源分布图 -->
-                        <el-col :xs="24" :sm="24" :md="24" :lg="24">
-                            <div class="chart-section">
-                                <SunBurstResourceChart
-                                    id="global-resource-chart"
-                                    name="全局资源分布"
-                                    :roomData="globalStoreData"
+                </div>
+
+                <!-- CPU 和 Bucket -->
+                <div ref="cpuBucketRef" class="section-anchor">
+                    <el-row :gutter="24" class="row-container chart-row">
+                        <el-col :xs="24" :sm="24" :md="12" :lg="12">
+                            <div class="chart-wrapper">
+                                <FlexibleLineChart
+                                    id="cpu-chart"
+                                    name="CPU 使用情况"
+                                    :timeData="screepsData.timeSeriesData?.timeStamp?.data"
+                                    :gameTimeData="screepsData.timeSeriesData?.gameTime?.data"
+                                    :yData="screepsData.timeSeriesData?.userData?.cpu?.data"
+                                    :exp="screepsData.timeSeriesData?.userData?.cpu?.exp"
+                                    :mode="'average'"
+                                    :interval="1500"
+                                    :aggregateAxis="'tick'"
+                                    :visible="true"
+                                />
+                            </div>
+                        </el-col>
+                        <el-col :xs="24" :sm="24" :md="12" :lg="12">
+                            <div class="chart-wrapper">
+                                <FlexibleLineChart
+                                    id="bucket-chart"
+                                    name="Bucket"
+                                    :timeData="screepsData.timeSeriesData?.timeStamp?.data"
+                                    :gameTimeData="screepsData.timeSeriesData?.gameTime?.data"
+                                    :yData="screepsData.timeSeriesData?.userData?.bucket?.data"
                                     :visible="true"
                                 />
                             </div>
                         </el-col>
                     </el-row>
-                </el-col>
-            </el-row>
+                </div>
 
-            <!-- 错误信息展示 -->
-            <el-row :gutter="24" class="row-container">
-                <el-col :xs="24" :sm="24" :md="24" :lg="24">
-                    <ErrorDisplay
-                        title="游戏错误信息"
-                        :errorData="screepsData.userData.error"
-                        :currentTick="screepsData.timeData.tick"
-                    />
-                </el-col>
-            </el-row>
+                <!-- 房间CPU用量对比 -->
+                <div ref="roomCpuRef" class="section-anchor">
+                    <el-row :gutter="24" class="row-container chart-row">
+                        <el-col :xs="24" :sm="24" :md="24" :lg="24">
+                            <div class="chart-wrapper">
+                                <ComparableLineChart
+                                    id="room-cpu-comparison-chart"
+                                    name="房间CPU用量对比"
+                                    :timeData="screepsData.timeSeriesData?.timeStamp?.data"
+                                    :gameTimeData="screepsData.timeSeriesData?.gameTime?.data"
+                                    :yDataList="roomCpuData"
+                                    :mode="'average'"
+                                    :interval="1500"
+                                    :aggregateAxis="'tick'"
+                                    :visible="true"
+                                />
+                            </div>
+                        </el-col>
+                    </el-row>
+                </div>
 
-            <!-- 项目展示 -->
-            <el-row :gutter="24" class="row-container">
-                <el-col :xs="24" :sm="24" :md="24" :lg="24">
-                    <ProjectsDisplay :projectsData="screepsData.globalData?.projects" />
-                </el-col>
-            </el-row>
+                <!-- 房间spawnTime对比 -->
+                <div ref="roomSpawnTimeRef" class="section-anchor">
+                    <el-row :gutter="24" class="row-container chart-row">
+                        <el-col :xs="24" :sm="24" :md="24" :lg="24">
+                            <div class="chart-wrapper">
+                                <ComparableLineChart
+                                    id="room-spawntime-comparison-chart"
+                                    name="房间spawnTime对比"
+                                    :timeData="screepsData.timeSeriesData?.timeStamp?.data"
+                                    :gameTimeData="screepsData.timeSeriesData?.gameTime?.data"
+                                    :yDataList="roomSpawnTimeData"
+                                    :mode="'sum'"
+                                    :interval="1500"
+                                    :aggregateAxis="'tick'"
+                                    :visible="true"
+                                />
+                            </div>
+                        </el-col>
+                    </el-row>
+                </div>
 
-            <!-- 全局实验室任务历史 -->
-            <el-row :gutter="24" class="row-container">
-                <el-col :xs="24" :sm="24" :md="24" :lg="24">
-                    <div class="chart-wrapper">
-                        <LabTaskHistoryDisplay
-                            :historyData="globalLabTaskHistoryData"
-                            title="全局实验室任务历史"
-                        />
-                    </div>
-                </el-col>
-            </el-row>
+                <!-- 房间spawnEnergy对比 -->
+                <div ref="roomSpawnEnergyRef" class="section-anchor">
+                    <el-row :gutter="24" class="row-container chart-row">
+                        <el-col :xs="24" :sm="24" :md="24" :lg="24">
+                            <div class="chart-wrapper">
+                                <ComparableLineChart
+                                    id="room-spawnenergy-comparison-chart"
+                                    name="房间spawnEnergy对比"
+                                    :timeData="screepsData.timeSeriesData?.timeStamp?.data"
+                                    :gameTimeData="screepsData.timeSeriesData?.gameTime?.data"
+                                    :yDataList="roomSpawnEnergyData"
+                                    :mode="'sum'"
+                                    :interval="1500"
+                                    :aggregateAxis="'tick'"
+                                    :visible="true"
+                                />
+                            </div>
+                        </el-col>
+                    </el-row>
+                </div>
+            </div>
 
-            <!-- CPU 和 Bucket 折线图 -->
-            <el-row :gutter="24" class="row-container chart-row">
-                <el-col :xs="24" :sm="24" :md="12" :lg="12">
-                    <div class="chart-wrapper">
-                        <FlexibleLineChart
-                            id="cpu-chart"
-                            name="CPU 使用情况"
-                            :timeData="screepsData.timeSeriesData?.timeStamp?.data"
-                            :gameTimeData="screepsData.timeSeriesData?.gameTime?.data"
-                            :yData="screepsData.timeSeriesData?.userData?.cpu?.data"
-                            :exp="screepsData.timeSeriesData?.userData?.cpu?.exp"
-                            :mode="'average'"
-                            :interval="1500"
-                            :aggregateAxis="'tick'"
-                            :visible="true"
-                        />
-                    </div>
-                </el-col>
-                <el-col :xs="24" :sm="24" :md="12" :lg="12">
-                    <div class="chart-wrapper">
-                        <FlexibleLineChart
-                            id="bucket-chart"
-                            name="Bucket"
-                            :timeData="screepsData.timeSeriesData?.timeStamp?.data"
-                            :gameTimeData="screepsData.timeSeriesData?.gameTime?.data"
-                            :yData="screepsData.timeSeriesData?.userData?.bucket?.data"
-                            :visible="true"
-                        />
-                    </div>
-                </el-col>
-            </el-row>
-
-            <!-- 房间CPU用量对比图 -->
-            <el-row :gutter="24" class="row-container chart-row">
-                <el-col :xs="24" :sm="24" :md="24" :lg="24">
-                    <div class="chart-wrapper">
-                        <ComparableLineChart
-                            id="room-cpu-comparison-chart"
-                            name="房间CPU用量对比"
-                            :timeData="screepsData.timeSeriesData?.timeStamp?.data"
-                            :gameTimeData="screepsData.timeSeriesData?.gameTime?.data"
-                            :yDataList="roomCpuData"
-                            :mode="'average'"
-                            :interval="1500"
-                            :aggregateAxis="'tick'"
-                            :visible="true"
-                        />
-                    </div>
-                </el-col>
-            </el-row>
-
-            <!-- 房间spawnTime对比图 -->
-            <el-row :gutter="24" class="row-container chart-row">
-                <el-col :xs="24" :sm="24" :md="24" :lg="24">
-                    <div class="chart-wrapper">
-                        <ComparableLineChart
-                            id="room-spawntime-comparison-chart"
-                            name="房间spawnTime对比"
-                            :timeData="screepsData.timeSeriesData?.timeStamp?.data"
-                            :gameTimeData="screepsData.timeSeriesData?.gameTime?.data"
-                            :yDataList="roomSpawnTimeData"
-                            :mode="'sum'"
-                            :interval="1500"
-                            :aggregateAxis="'tick'"
-                            :visible="true"
-                        />
-                    </div>
-                </el-col>
-            </el-row>
-
-            <!-- 房间spawnEnergy对比图 -->
-            <el-row :gutter="24" class="row-container chart-row">
-                <el-col :xs="24" :sm="24" :md="24" :lg="24">
-                    <div class="chart-wrapper">
-                        <ComparableLineChart
-                            id="room-spawnenergy-comparison-chart"
-                            name="房间spawnEnergy对比"
-                            :timeData="screepsData.timeSeriesData?.timeStamp?.data"
-                            :gameTimeData="screepsData.timeSeriesData?.gameTime?.data"
-                            :yDataList="roomSpawnEnergyData"
-                            :mode="'sum'"
-                            :interval="1500"
-                            :aggregateAxis="'tick'"
-                            :visible="true"
-                        />
-                    </div>
-                </el-col>
-            </el-row>
+            <!-- 无数据提示 -->
+            <el-empty v-else description="暂无分片数据，等待游戏数据..." />
         </div>
-
-        <!-- 无数据提示 -->
-        <el-empty v-else description="暂无分片数据，等待游戏数据..." />
     </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { ref, computed } from "vue";
 import { useAppStore } from "@/stores/app";
 import type { RoomData } from "@/type/player/AI/AIUreium/ui/type";
 
@@ -167,12 +193,58 @@ import SunBurstResourceChart from "@/components/echarts/SunBurstResourceChart.vu
 import ErrorDisplay from "@/components/ErrorDisplay.vue";
 import ProjectsDisplay from "@/components/ProjectsDisplay.vue";
 import LabTaskHistoryDisplay from "@/components/LabTaskHistoryDisplay.vue";
+import PanelSidebar from "@/components/sidebar/PanelSidebar.vue";
+import type { SidebarCategory } from "@/components/sidebar/PanelSidebar.vue";
 
 // Pinia store
 const appStore = useAppStore();
 
 // 本地状态
 const screepsData = computed(() => appStore.screepsData);
+
+// 侧栏分类
+const activeCategory = ref("database");
+
+const sidebarCategories = computed<SidebarCategory[]>(() => [
+    { key: "database", label: "数据库 / 资源" },
+    { key: "errors", label: "错误信息" },
+    { key: "projects", label: "项目列表" },
+    { key: "labHistory", label: "实验室历史" },
+    { key: "cpuBucket", label: "CPU / Bucket" },
+    { key: "roomCpu", label: "房间CPU对比" },
+    { key: "roomSpawnTime", label: "孵化时间对比" },
+    { key: "roomSpawnEnergy", label: "孵化能量对比" },
+]);
+
+// DOM 元素引用
+const mainContentRef = ref<HTMLElement | null>(null);
+const databaseRef = ref<HTMLElement | null>(null);
+const errorsRef = ref<HTMLElement | null>(null);
+const projectsRef = ref<HTMLElement | null>(null);
+const labHistoryRef = ref<HTMLElement | null>(null);
+const cpuBucketRef = ref<HTMLElement | null>(null);
+const roomCpuRef = ref<HTMLElement | null>(null);
+const roomSpawnTimeRef = ref<HTMLElement | null>(null);
+const roomSpawnEnergyRef = ref<HTMLElement | null>(null);
+
+const categoryRefMap: Record<string, ReturnType<typeof ref<HTMLElement | null>>> = {
+    database: databaseRef,
+    errors: errorsRef,
+    projects: projectsRef,
+    labHistory: labHistoryRef,
+    cpuBucket: cpuBucketRef,
+    roomCpu: roomCpuRef,
+    roomSpawnTime: roomSpawnTimeRef,
+    roomSpawnEnergy: roomSpawnEnergyRef,
+};
+
+function scrollToCategory(key: string): void {
+    activeCategory.value = key;
+    const targetRef = categoryRefMap[key];
+    if (targetRef?.value) {
+        targetRef.value.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+}
 
 // 计算所有房间的store数据总和
 const globalStoreData = computed(() => {

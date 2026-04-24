@@ -6,7 +6,39 @@
 
 /* ==================== 面板基础容器样式 ==================== */
 
-/* 全局信息面板容器 */
+/* 面板容器（带侧栏布局） */
+.panel-with-sidebar {
+    display: flex;
+    height: calc(100vh - var(--navigation-bar-height, 120px));
+    width: 100%;
+    background-color: #f5f7fa;
+    overflow: hidden;
+}
+
+/* 面板主内容区域 */
+.panel-main-content {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 面板主内容区域内的内容块 */
+.panel-main-content .panel-main {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    flex: 1;
+}
+
+/* 侧栏跳转目标锚点 */
+.section-anchor {
+    scroll-margin-top: 1rem;
+}
+
+/* 全局信息面板容器（旧，保留用于兼容） */
 .global-info-container {
     padding: 1.5rem;
     background-color: #f5f7fa;
@@ -147,6 +179,54 @@
 .chart-wrapper .chart-container {
     flex: 1;
     min-height: 360px;
+}
+
+/* ==================== 侧栏布局响应式 ==================== */
+
+@media (max-width: 768px) {
+    .panel-with-sidebar {
+        flex-direction: column;
+        height: auto;
+    }
+
+    .panel-with-sidebar .panel-sidebar {
+        width: 100%;
+        min-width: unset;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        border-right: none;
+        border-bottom: 1px solid #e1e8ed;
+        height: auto;
+        max-height: 48px;
+    }
+
+    .panel-with-sidebar .panel-sidebar .sidebar-header {
+        display: none;
+    }
+
+    .panel-with-sidebar .panel-sidebar .sidebar-categories {
+        display: flex;
+        flex-direction: row;
+        padding: 0;
+        overflow-x: auto;
+    }
+
+    .panel-with-sidebar .panel-sidebar .category-item {
+        border-left: none;
+        border-bottom: 3px solid transparent;
+        white-space: nowrap;
+        padding: 0.5rem 0.75rem;
+    }
+
+    .panel-with-sidebar .panel-sidebar .category-item.is-active {
+        border-left-color: transparent;
+        border-bottom-color: #409eff;
+    }
+
+    .panel-main-content {
+        padding: 1rem;
+    }
 }
 
 /* ==================== 响应式设计 ==================== */

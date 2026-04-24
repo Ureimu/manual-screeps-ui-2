@@ -16,7 +16,7 @@
                 <el-table
                     :data="sortedHistoryData"
                     style="width: 100%"
-                    :default-sort="{ prop: 'endTick', order: 'descending' }"
+                    :default-sort="{ prop: 'endTick', order: 'ascending' }"
                     stripe
                     border
                     size="small"
