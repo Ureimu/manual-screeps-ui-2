@@ -13,8 +13,6 @@
  *   - 认证失败响应: a["auth failed"]
  */
 
-import { ElMessage } from "element-plus";
-
 // ==================== 类型定义 ====================
 
 export interface PlayerInfo {
@@ -324,6 +322,7 @@ export function authSessionToken(ws: WebSocket, sessionToken: string): Promise<A
                 }
             } catch (err) {
                 // 解析失败则忽略，可能是其他消息
+                console.log(err);
             }
         };
         ws.addEventListener("message", handler);

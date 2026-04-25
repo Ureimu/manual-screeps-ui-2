@@ -343,7 +343,6 @@ const userName = ref("");
 let ws: WebSocket | null = null;
 let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
-let isManualDisconnect = false;
 
 const connectionStatusText = computed(() => {
     if (connecting.value) return "连接中...";
@@ -467,13 +466,13 @@ function stopHeartbeat(): void {
     }
 }
 
-function scheduleReconnect(): void {
-    if (isManualDisconnect) return;
-    if (reconnectTimer !== null) clearTimeout(reconnectTimer);
-    reconnectTimer = setTimeout(() => {
-        if (!wsConnected.value && !isManualDisconnect) handleConnect();
-    }, 5000);
-}
+// function scheduleReconnect(): void {
+//     if (isManualDisconnect) return;
+//     if (reconnectTimer !== null) clearTimeout(reconnectTimer);
+//     reconnectTimer = setTimeout(() => {
+//         if (!wsConnected.value && !isManualDisconnect) handleConnect();
+//     }, 5000);
+// }
 
 function cancelReconnect(): void {
     if (reconnectTimer !== null) {
@@ -499,7 +498,6 @@ async function handleConnect(): Promise<void> {
     setCurrentServer(server);
 
     connecting.value = true;
-    isManualDisconnect = false;
 
     addDebugLog("info", `服务器: ${server}`);
     addDebugLog("info", `Token: ${token.substring(0, 8)}... (${token.length}字符)`);
@@ -611,13 +609,13 @@ async function handleConnect(): Promise<void> {
                     `[WS消息 #${msgCount}] log=${logCount}条, result=${resultCount}条`,
                 );
 
-                if (logCount > 0) {
+                if (logCount > 0 && logArr) {
                     for (const msg of logArr) {
                         addDebugLog("info", `[log] ${String(msg).substring(0, 200)}`);
                         addConsoleMessage("log", String(msg));
                     }
                 }
-                if (resultCount > 0) {
+                if (resultCount > 0 && resultArr) {
                     for (const msg of resultArr) {
                         addDebugLog("info", `[result] ${String(msg).substring(0, 200)}`);
                         addConsoleMessage("result", String(msg));
@@ -634,7 +632,7 @@ async function handleConnect(): Promise<void> {
 
         // ===== step 4: 发送认证（authSessionToken 使用 addEventListener，不覆盖 onmessage）=====
         addDebugLog("info", "步骤4: 发送认证...");
-        const { sessionToken: newToken } = await authSessionToken(ws, playerInfo.sessionToken);
+        await authSessionToken(ws, playerInfo.sessionToken);
         addDebugLog("success", "WebSocket 认证通过");
 
         // ===== step 5: 订阅控制台 =====
@@ -649,7 +647,7 @@ async function handleConnect(): Promise<void> {
             availableShards.value = shards;
             addDebugLog("success", `获取到 ${shards.length} 个分片: ${shards.join(", ")}`);
             if (shards.length > 0) {
-                commandForm.value.shard = shards[0];
+                commandForm.value.shard = shards[0] as string;
             }
         } catch (err) {
             const msg = err instanceof Error ? err.message : "获取分片失败";
@@ -669,7 +667,6 @@ async function handleConnect(): Promise<void> {
 }
 
 function handleDisconnect(): void {
-    isManualDisconnect = true;
     cancelReconnect();
     stopHeartbeat();
     apiCloseWs(ws);
@@ -782,7 +779,6 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-    isManualDisconnect = true;
     cancelReconnect();
     stopHeartbeat();
     apiCloseWs(ws);
