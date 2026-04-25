@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from "vue-router";
 import RoomInfoPanel from "@/views/RoomInfoPanel.vue";
 import GlobalInfoPanel from "@/views/GlobalInfoPanel.vue";
 import ShardInfoPanel from "@/views/ShardInfoPanel.vue";
+import ConsolePanel from "@/views/ConsolePanel.vue";
 import ProjectDetail from "@/views/ProjectDetail.vue";
 
 const router = createRouter({
@@ -34,6 +35,14 @@ const router = createRouter({
             component: ShardInfoPanel,
             meta: {
                 title: "分片信息面板",
+            },
+        },
+        {
+            path: "/console",
+            name: "console",
+            component: ConsolePanel,
+            meta: {
+                title: "控制台面板",
             },
         },
         {

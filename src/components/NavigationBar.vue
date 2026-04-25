@@ -19,6 +19,10 @@
                 <el-icon><DataAnalysis /></el-icon>
                 <span>分片信息</span>
             </el-menu-item>
+            <el-menu-item index="/console">
+                <el-icon><Monitor /></el-icon>
+                <span>控制台</span>
+            </el-menu-item>
         </el-menu>
 
         <!-- 信息显示区域 -->
@@ -242,6 +246,15 @@
                     </div>
                 </div>
             </div>
+
+            <!-- 控制台面板 -->
+            <div v-if="isConsolePage" class="info-content">
+                <div class="info-controls">
+                    <div class="right-info">
+                        <span class="shard-text">控制台终端</span>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </template>
@@ -250,7 +263,7 @@
 import { ref, computed, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useAppStore } from "@/stores/app";
-import { House, View, Location, DataAnalysis } from "@element-plus/icons-vue";
+import { House, View, Location, DataAnalysis, Monitor } from "@element-plus/icons-vue";
 import { ElMessage } from "element-plus";
 import { getAllPresets, type TimeRangePreset } from "@/utils/chartPresets";
 import { convertScreepsData } from "@/utils/convertScreepsData";
@@ -285,6 +298,7 @@ watch(
 const isGlobalPage = computed(() => route.path === "/global");
 const isRoomPage = computed(() => route.path === "/dashboard");
 const isShardPage = computed(() => route.path === "/shard");
+const isConsolePage = computed(() => route.path === "/console");
 
 const screepsData = computed(() => appStore.screepsData);
 const axisType = computed(() => appStore.options.axisType);

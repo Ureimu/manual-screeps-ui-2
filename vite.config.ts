@@ -32,4 +32,18 @@ export default defineConfig({
             external: ["./src/data/index.ts"],
         },
     },
+    server: {
+        proxy: {
+            // 官方服 API: 请求 /api/auth/me → https://screeps.com/api/auth/me
+            "/api": {
+                target: "https://screeps.com",
+                changeOrigin: true,
+            },
+            // PTR 测试服 API: 请求 /ptr/api/auth/me → https://screeps.com/ptr/api/auth/me
+            "/ptr": {
+                target: "https://screeps.com",
+                changeOrigin: true,
+            },
+        },
+    },
 });
