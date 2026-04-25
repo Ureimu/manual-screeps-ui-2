@@ -433,8 +433,12 @@ function stripShardPrefix(text: string): string {
     return text.replace(/^\[[^\]]+\]\s*/, "").replace(/^\([^)]+\)\s*/, "");
 }
 
-function addConsoleMessage(type: "log" | "result", text: string): void {
-    const shard = extractShard(text);
+function addConsoleMessage(
+    type: "log" | "result",
+    text: string,
+    explicitShard?: string | null,
+): void {
+    const shard = explicitShard ?? extractShard(text);
     const cleanText = stripShardPrefix(text);
     const resolvedShard = shard || commandForm.value.shard || null;
 
@@ -465,14 +469,6 @@ function stopHeartbeat(): void {
         heartbeatTimer = null;
     }
 }
-
-// function scheduleReconnect(): void {
-//     if (isManualDisconnect) return;
-//     if (reconnectTimer !== null) clearTimeout(reconnectTimer);
-//     reconnectTimer = setTimeout(() => {
-//         if (!wsConnected.value && !isManualDisconnect) handleConnect();
-//     }, 5000);
-// }
 
 function cancelReconnect(): void {
     if (reconnectTimer !== null) {
@@ -581,10 +577,11 @@ async function handleConnect(): Promise<void> {
 
             // 控制台消息: channel 包含 "/console"
             if (channel.includes("/console")) {
-                const msgPayload = payload as Record<string, unknown>;
-                const messages = msgPayload.messages as
-                    | { log?: string[]; results?: string[] }
-                    | undefined;
+                const msgPayload = payload as {
+                    messages: { log: string[]; results: string[] };
+                    shard: string;
+                };
+                const messages = msgPayload.messages;
 
                 addDebugLog(
                     "info",
@@ -612,13 +609,13 @@ async function handleConnect(): Promise<void> {
                 if (logCount > 0 && logArr) {
                     for (const msg of logArr) {
                         addDebugLog("info", `[log] ${String(msg).substring(0, 200)}`);
-                        addConsoleMessage("log", String(msg));
+                        addConsoleMessage("log", String(msg), msgPayload.shard);
                     }
                 }
                 if (resultCount > 0 && resultArr) {
                     for (const msg of resultArr) {
                         addDebugLog("info", `[result] ${String(msg).substring(0, 200)}`);
-                        addConsoleMessage("result", String(msg));
+                        addConsoleMessage("result", String(msg), msgPayload.shard);
                     }
                 }
 
