@@ -160,7 +160,7 @@
                                 <el-tag v-else size="small" type="info" class="console-type-tag">
                                     log
                                 </el-tag>
-                                <span class="console-text">{{ msg.text }}</span>
+                                <span class="console-text" v-html="msg.displayHtml"></span>
                             </div>
                         </div>
                     </el-card>
@@ -280,6 +280,7 @@ import {
 interface ConsoleMessage {
     type: "log" | "result";
     text: string;
+    displayHtml: string;
     shard: string | null;
     time: string;
 }
@@ -433,6 +434,14 @@ function stripShardPrefix(text: string): string {
     return text.replace(/^\[[^\]]+\]\s*/, "").replace(/^\([^)]+\)\s*/, "");
 }
 
+function parseConsoleHtml(text: string): string {
+    let html = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    html = html.replace(/&lt;text\s+style="color:\s*([^"]+?)"\s*&gt;/g, '<span style="color: $1">');
+    html = html.replace(/&lt;text\s+style='color:\s*([^']+?)'\s*&gt;/g, "<span style='color: $1'>");
+    html = html.replace(/&lt;\/text&gt;/g, "</span>");
+    return html;
+}
+
 function addConsoleMessage(
     type: "log" | "result",
     text: string,
@@ -441,6 +450,7 @@ function addConsoleMessage(
     const shard = explicitShard ?? extractShard(text);
     const cleanText = stripShardPrefix(text);
     const resolvedShard = shard || commandForm.value.shard || null;
+    const displayHtml = parseConsoleHtml(cleanText);
 
     if (resolvedShard && !availableShards.value.includes(resolvedShard)) {
         availableShards.value.push(resolvedShard);
@@ -449,7 +459,13 @@ function addConsoleMessage(
         }
     }
 
-    consoleMessages.value.push({ type, text: cleanText, shard: resolvedShard, time: formatTime() });
+    consoleMessages.value.push({
+        type,
+        text: cleanText,
+        displayHtml,
+        shard: resolvedShard,
+        time: formatTime(),
+    });
     if (consoleMessages.value.length > 1000) {
         consoleMessages.value = consoleMessages.value.slice(-500);
     }
@@ -740,7 +756,9 @@ function handleClearConsole(): void {
 
 function handleCopyConsole(): void {
     const text = filteredConsoleMessages.value
-        .map((m) => `[${m.time}]${m.shard ? ` [${m.shard}]` : ""} ${m.text}`)
+        .map(
+            (m) => `[${m.time}]${m.shard ? ` [${m.shard}]` : ""} ${m.text.replace(/<[^>]*>/g, "")}`,
+        )
         .join("\n");
     navigator.clipboard.writeText(text).then(
         () => ElMessage.success("已复制"),
