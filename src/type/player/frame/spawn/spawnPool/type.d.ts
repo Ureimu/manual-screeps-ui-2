@@ -1,5 +1,8 @@
 import { ReadyCondition } from "../spawning/readyCondition/type";
 export interface SpawnCreepDetail {
+    type: "spawnCreep";
+    id: string;
+    taskName: string;
     /**
      * creep的名称。
      */

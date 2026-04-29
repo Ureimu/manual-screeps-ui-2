@@ -500,6 +500,18 @@ export interface RoomConfig {
      */
     tower: {
         /**
+         * 是否进行攻击。
+         */
+        attack: boolean;
+        /**
+         * 是否进行治疗。
+         */
+        heal: boolean;
+        /**
+         * 是否进行修理。
+         */
+        repair: boolean;
+        /**
          * 建筑受到塔修理的最低血量。
          */
         minHitsToRepair: number;
@@ -533,6 +545,19 @@ export interface RoomConfig {
          * 停止重启的能量值。
          */
         maxEnergy: number;
+    };
+    /**
+     * 房间主动防御设置。
+     */
+    activeDefense: {
+        /**
+         * 是否启用主动防御。
+         */
+        run: boolean;
+        /**
+         * 是否攻击npc入侵者。
+         */
+        attackNpcInvader: boolean;
     };
     /**
      * 房间资源量上下限设置。

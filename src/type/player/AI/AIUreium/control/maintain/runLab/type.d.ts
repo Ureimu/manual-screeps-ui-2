@@ -34,6 +34,9 @@ type LabTaskRunReaction = {
     clearLabsOnEnd: {
         [labId: string]: boolean;
     };
+    /**
+     * 是否正在任务完成后清理lab。
+     */
     isClearingLabsOnEnd: boolean;
 };
 type LabTaskReverseReaction = {
@@ -51,6 +54,9 @@ type LabTaskReverseReaction = {
     clearLabsOnEnd: {
         [labId: string]: boolean;
     };
+    /**
+     * 是否正在任务完成后清理lab。
+     */
     isClearingLabsOnEnd: boolean;
 };
 export type LabTask = {

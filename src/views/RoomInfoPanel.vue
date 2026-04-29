@@ -248,6 +248,29 @@
                         </el-col>
                     </el-row>
                 </div>
+                <div ref="energyDeltaRef" class="section-anchor">
+                    <el-row
+                        v-if="currentRoomName && energyDeltaByProjectData.length > 0"
+                        :gutter="24"
+                        class="row-container chart-row"
+                    >
+                        <el-col :xs="24" :sm="24" :md="24" :lg="24">
+                            <div class="chart-wrapper">
+                                <ComparableLineChart
+                                    id="energy-delta-chart"
+                                    name="项目能量变化对比"
+                                    :timeData="screepsData.timeSeriesData?.timeStamp?.data"
+                                    :gameTimeData="screepsData.timeSeriesData?.gameTime?.data"
+                                    :yDataList="energyDeltaByProjectData"
+                                    :mode="'sum'"
+                                    :interval="1500"
+                                    :aggregateAxis="'tick'"
+                                    :visible="true"
+                                />
+                            </div>
+                        </el-col>
+                    </el-row>
+                </div>
             </div>
 
             <!-- 无数据提示 -->
@@ -290,6 +313,7 @@ const sidebarCategories = computed<SidebarCategory[]>(() => [
     { key: "projects", label: "项目列表" },
     { key: "labHistory", label: "实验室历史" },
     { key: "outwards", label: "外矿数据" },
+    { key: "energyDelta", label: "项目能量变化" },
 ]);
 
 // DOM 元素引用
@@ -301,6 +325,7 @@ const spawnRef = ref<HTMLElement | null>(null);
 const projectsRef = ref<HTMLElement | null>(null);
 const labHistoryRef = ref<HTMLElement | null>(null);
 const outwardsRef = ref<HTMLElement | null>(null);
+const energyDeltaRef = ref<HTMLElement | null>(null);
 
 const categoryRefMap: Record<string, ReturnType<typeof ref<HTMLElement | null>>> = {
     overview: overviewRef,
@@ -310,6 +335,7 @@ const categoryRefMap: Record<string, ReturnType<typeof ref<HTMLElement | null>>>
     projects: projectsRef,
     labHistory: labHistoryRef,
     outwards: outwardsRef,
+    energyDelta: energyDeltaRef,
 };
 
 function scrollToCategory(key: string): void {
@@ -368,6 +394,19 @@ const outwardsSourceData = computed(() => {
     if (!roomData?.outwardsSourceEnergy) return [];
 
     return Object.entries(roomData.outwardsSourceEnergy).map(([name, data]) => ({
+        name,
+        data: Array.isArray(data.data) ? data.data : [],
+        exp: data.exp,
+    }));
+});
+
+// 获取项目能量变化数据
+const energyDeltaByProjectData = computed(() => {
+    if (!screepsData.value?.timeSeriesData || !currentRoomName.value) return [];
+    const roomData = screepsData.value.timeSeriesData.roomData?.[currentRoomName.value];
+    if (!roomData?.storageData?.energyDeltaByProject) return [];
+
+    return Object.entries(roomData.storageData.energyDeltaByProject).map(([name, data]) => ({
         name,
         data: Array.isArray(data.data) ? data.data : [],
         exp: data.exp,

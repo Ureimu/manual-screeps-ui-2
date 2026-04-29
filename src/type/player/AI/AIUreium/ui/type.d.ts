@@ -1,11 +1,11 @@
 import { creepBodyConfigDetail } from "frame/creep/body/type";
 import { CreepGroupMemory, CreepGroupMode } from "frame/creep/group/type";
-import { SpawnCreepDetail } from "frame/spawn/spawnPool/type";
 import { ErrorSegmentMemory } from "utils/ErrorMapper/type";
 import { RoomStatusData } from "../control/outwardsSource/type";
 import { ScreepsConfig } from "../config/type";
 import { SingleData, SingleTypedTreeDataRecord, TimeSeriesEngineData } from "screeps-timeseries";
 import { LabTaskHistory } from "../control/maintain/runLab/type";
+import { SpawnTask } from "frame/spawn/spawning/type";
 export { ErrorSegmentMemory };
 /**
  * 该文件为ui库与本代码库共享的类型文件。
@@ -97,7 +97,7 @@ export interface RoomData {
     };
     name: string;
     spawnPool: {
-        [creepName: string]: SpawnCreepDetail;
+        [creepName: string]: SpawnTask;
     };
     status?: RoomStatusData;
 }
@@ -119,6 +119,9 @@ export type TimeSeriesStats<T extends string | number | (number | null)[]> = {
             controllerProgress: SingleData<T>;
             storageData: {
                 energy: SingleData<T>;
+                energyDeltaByProject: {
+                    [projectName: string]: SingleData<T>;
+                };
             };
             outwardsSourceEnergy: {
                 [sourceName: string]: SingleData<T>;
