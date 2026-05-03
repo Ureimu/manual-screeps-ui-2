@@ -126,8 +126,12 @@ export type TimeSeriesStats<T extends string | number | (number | null)[]> = {
             outwardsSourceEnergy: {
                 [sourceName: string]: SingleData<T>;
             };
-            spawnTime: SingleData<T>;
-            spawnEnergy: SingleData<T>;
+            spawnTime: {
+                [projectName: string]: SingleData<T>;
+            };
+            spawnEnergy: {
+                [projectName: string]: SingleData<T>;
+            };
             cpu: SingleData<T>;
         };
     };

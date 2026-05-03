@@ -137,14 +137,7 @@
                                     name="孵化时间"
                                     :timeData="screepsData.timeSeriesData?.timeStamp?.data"
                                     :gameTimeData="screepsData.timeSeriesData?.gameTime?.data"
-                                    :yData="
-                                        screepsData.timeSeriesData?.roomData?.[currentRoomName]
-                                            ?.spawnTime?.data
-                                    "
-                                    :exp="
-                                        screepsData.timeSeriesData?.roomData?.[currentRoomName]
-                                            ?.spawnTime?.exp
-                                    "
+                                    :yData="totalSpawnTimeData"
                                     :mode="'sum'"
                                     :interval="1500"
                                     :aggregateAxis="'tick'"
@@ -181,14 +174,7 @@
                                     name="孵化能量"
                                     :timeData="screepsData.timeSeriesData?.timeStamp?.data"
                                     :gameTimeData="screepsData.timeSeriesData?.gameTime?.data"
-                                    :yData="
-                                        screepsData.timeSeriesData?.roomData?.[currentRoomName]
-                                            ?.spawnEnergy?.data
-                                    "
-                                    :exp="
-                                        screepsData.timeSeriesData?.roomData?.[currentRoomName]
-                                            ?.spawnEnergy?.exp
-                                    "
+                                    :yData="totalSpawnEnergyData"
                                     :mode="'sum'"
                                     :interval="1500"
                                     :aggregateAxis="'tick'"
@@ -258,7 +244,7 @@
                             <div class="chart-wrapper">
                                 <ComparableLineChart
                                     id="energy-delta-chart"
-                                    name="项目能量变化对比"
+                                    name="项目能量净收益对比"
                                     :timeData="screepsData.timeSeriesData?.timeStamp?.data"
                                     :gameTimeData="screepsData.timeSeriesData?.gameTime?.data"
                                     :yDataList="energyDeltaByProjectData"
@@ -313,7 +299,7 @@ const sidebarCategories = computed<SidebarCategory[]>(() => [
     { key: "projects", label: "项目列表" },
     { key: "labHistory", label: "实验室历史" },
     { key: "outwards", label: "外矿数据" },
-    { key: "energyDelta", label: "项目能量变化" },
+    { key: "energyDelta", label: "项目能量净收益" },
 ]);
 
 // DOM 元素引用
@@ -400,17 +386,81 @@ const outwardsSourceData = computed(() => {
     }));
 });
 
-// 获取项目能量变化数据
+// 获取项目能量净收益数据
+// 公式: energyDeltaByProject = storage能量交换 - spawn能量消耗
 const energyDeltaByProjectData = computed(() => {
     if (!screepsData.value?.timeSeriesData || !currentRoomName.value) return [];
     const roomData = screepsData.value.timeSeriesData.roomData?.[currentRoomName.value];
     if (!roomData?.storageData?.energyDeltaByProject) return [];
 
-    return Object.entries(roomData.storageData.energyDeltaByProject).map(([name, data]) => ({
-        name,
-        data: Array.isArray(data.data) ? data.data : [],
-        exp: data.exp,
-    }));
+    const spawnEnergyData = roomData.spawnEnergy ?? {};
+
+    return Object.entries(roomData.storageData.energyDeltaByProject).map(([name, storageDelta]) => {
+        const storageArr = Array.isArray(storageDelta.data) ? storageDelta.data : [];
+        const spawnArr = Array.isArray(spawnEnergyData[name]?.data)
+            ? (spawnEnergyData[name] as typeof storageDelta).data
+            : [];
+
+        const resultData = storageArr.map((storageVal, index) => {
+            const spawnVal = spawnArr[index] ?? 0;
+            if (storageVal === null) return null;
+            if (spawnVal === null) return storageVal;
+            return storageVal - spawnVal;
+        });
+
+        return {
+            name,
+            data: resultData,
+        };
+    });
+});
+
+// 汇总 spawnTime: 对每个房间的所有 project 求和
+const totalSpawnTimeData = computed(() => {
+    if (!screepsData.value?.timeSeriesData || !currentRoomName.value) return [];
+    const roomData = screepsData.value.timeSeriesData.roomData?.[currentRoomName.value];
+    if (!roomData?.spawnTime) return [];
+
+    const entries = Object.values(roomData.spawnTime);
+    if (entries.length === 0) return [];
+
+    const maxLen = Math.max(...entries.map((e) => (Array.isArray(e.data) ? e.data.length : 0)));
+    const result: (number | null)[] = new Array(maxLen).fill(0);
+
+    for (const entry of entries) {
+        const data = Array.isArray(entry.data) ? entry.data : [];
+        for (let i = 0; i < data.length; i++) {
+            const val = data[i];
+            if (val == null) continue;
+            result[i] = (result[i] ?? 0) + val;
+        }
+    }
+
+    return result;
+});
+
+// 汇总 spawnEnergy: 对每个房间的所有 project 求和
+const totalSpawnEnergyData = computed(() => {
+    if (!screepsData.value?.timeSeriesData || !currentRoomName.value) return [];
+    const roomData = screepsData.value.timeSeriesData.roomData?.[currentRoomName.value];
+    if (!roomData?.spawnEnergy) return [];
+
+    const entries = Object.values(roomData.spawnEnergy);
+    if (entries.length === 0) return [];
+
+    const maxLen = Math.max(...entries.map((e) => (Array.isArray(e.data) ? e.data.length : 0)));
+    const result: (number | null)[] = new Array(maxLen).fill(0);
+
+    for (const entry of entries) {
+        const data = Array.isArray(entry.data) ? entry.data : [];
+        for (let i = 0; i < data.length; i++) {
+            const val = data[i];
+            if (val == null) continue;
+            result[i] = (result[i] ?? 0) + val;
+        }
+    }
+
+    return result;
 });
 
 // 筛选项目数据 - 只显示项目ID以当前房间名称开头的项目

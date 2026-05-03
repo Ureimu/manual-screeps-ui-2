@@ -14,6 +14,7 @@ export type CreepGroupMemory<T extends CreepGroupMode = CreepGroupMode> = T exte
     ifShow: boolean;
     arguments: string[];
     projectName?: string;
+    projectId?: string;
 } : T extends "role" ? {
     mode: "role";
     creepNameList: string[];
@@ -21,6 +22,7 @@ export type CreepGroupMemory<T extends CreepGroupMode = CreepGroupMode> = T exte
     ifShow: boolean;
     arguments: string[];
     projectName?: string;
+    projectId?: string;
     isInterShard?: boolean;
 } : never;
 export type CreepGroupMode = "route" | "role";
