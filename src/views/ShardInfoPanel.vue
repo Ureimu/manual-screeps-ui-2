@@ -333,43 +333,61 @@ const roomCpuData = computed(() => {
     return cpuDataList;
 });
 
-// 获取所有房间的spawnTime数据
+// 获取所有房间的spawnTime数据（对每个房间的所有 project 求和）
 const roomSpawnTimeData = computed(() => {
     if (!screepsData.value?.timeSeriesData?.roomData) return [];
 
     const roomData = screepsData.value.timeSeriesData.roomData;
-    const spawnTimeDataList = [];
+    const spawnTimeDataList: { name: string; data: (number | null)[] }[] = [];
 
-    // 遍历所有房间，获取spawnTime数据
     for (const [roomName, roomTimeSeriesData] of Object.entries(roomData)) {
-        if (roomTimeSeriesData?.spawnTime?.data) {
-            spawnTimeDataList.push({
-                name: roomName,
-                data: roomTimeSeriesData.spawnTime.data,
-                exp: roomTimeSeriesData.spawnTime.exp,
-            });
+        if (!roomTimeSeriesData?.spawnTime) continue;
+        const entries = Object.values(roomTimeSeriesData.spawnTime);
+        if (entries.length === 0) continue;
+
+        const maxLen = Math.max(...entries.map((e) => (Array.isArray(e.data) ? e.data.length : 0)));
+        const result: (number | null)[] = new Array(maxLen).fill(0);
+
+        for (const entry of entries) {
+            const data = Array.isArray(entry.data) ? entry.data : [];
+            for (let i = 0; i < data.length; i++) {
+                const val = data[i];
+                if (val == null) continue;
+                result[i] = (result[i] ?? 0) + val;
+            }
         }
+
+        spawnTimeDataList.push({ name: roomName, data: result });
     }
 
     return spawnTimeDataList;
 });
 
-// 获取所有房间的spawnEnergy数据
+// 获取所有房间的spawnEnergy数据（对每个房间的所有 project 求和）
 const roomSpawnEnergyData = computed(() => {
     if (!screepsData.value?.timeSeriesData?.roomData) return [];
 
     const roomData = screepsData.value.timeSeriesData.roomData;
-    const spawnEnergyDataList = [];
+    const spawnEnergyDataList: { name: string; data: (number | null)[] }[] = [];
 
-    // 遍历所有房间，获取spawnEnergy数据
     for (const [roomName, roomTimeSeriesData] of Object.entries(roomData)) {
-        if (roomTimeSeriesData?.spawnEnergy?.data) {
-            spawnEnergyDataList.push({
-                name: roomName,
-                data: roomTimeSeriesData.spawnEnergy.data,
-                exp: roomTimeSeriesData.spawnEnergy.exp,
-            });
+        if (!roomTimeSeriesData?.spawnEnergy) continue;
+        const entries = Object.values(roomTimeSeriesData.spawnEnergy);
+        if (entries.length === 0) continue;
+
+        const maxLen = Math.max(...entries.map((e) => (Array.isArray(e.data) ? e.data.length : 0)));
+        const result: (number | null)[] = new Array(maxLen).fill(0);
+
+        for (const entry of entries) {
+            const data = Array.isArray(entry.data) ? entry.data : [];
+            for (let i = 0; i < data.length; i++) {
+                const val = data[i];
+                if (val == null) continue;
+                result[i] = (result[i] ?? 0) + val;
+            }
         }
+
+        spawnEnergyDataList.push({ name: roomName, data: result });
     }
 
     return spawnEnergyDataList;
