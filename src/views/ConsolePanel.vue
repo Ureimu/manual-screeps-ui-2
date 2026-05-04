@@ -106,9 +106,9 @@
                                         v-model="shardFilter"
                                         placeholder="筛选分片"
                                         size="small"
-                                        clearable
-                                        style="width: 140px; margin-right: 8px"
+                                        style="width: 160px; margin-right: 8px"
                                     >
+                                        <el-option label="全部（不筛选）" value="" />
                                         <el-option
                                             v-for="s in availableShards"
                                             :key="s"
@@ -133,36 +133,45 @@
                                 </div>
                             </div>
                         </template>
-                        <div ref="consoleOutputRef" class="console-output">
-                            <div
-                                v-if="filteredConsoleMessages.length === 0"
-                                class="console-placeholder"
-                            >
-                                <el-empty description="暂无控制台消息" :image-size="80" />
-                            </div>
-                            <div
-                                v-for="(msg, index) in filteredConsoleMessages"
-                                :key="index"
-                                :class="['console-line', `console-line-${msg.type}`]"
-                            >
-                                <span class="console-timestamp">{{ msg.time }}</span>
-                                <el-tag v-if="msg.shard" size="small" class="console-shard-tag">
-                                    {{ msg.shard }}
-                                </el-tag>
-                                <el-tag
-                                    v-if="msg.type === 'result'"
-                                    size="small"
-                                    type="success"
-                                    class="console-type-tag"
-                                >
-                                    result
-                                </el-tag>
-                                <el-tag v-else size="small" type="info" class="console-type-tag">
-                                    log
-                                </el-tag>
-                                <span class="console-text" v-html="msg.displayHtml"></span>
-                            </div>
+                        <div
+                            v-if="filteredConsoleMessages.length === 0"
+                            class="console-output console-placeholder"
+                        >
+                            <el-empty description="暂无控制台消息" :image-size="80" />
                         </div>
+                        <DynamicScroller
+                            v-else
+                            ref="consoleScrollerRef"
+                            :items="filteredConsoleMessages"
+                            :min-item-size="28"
+                            key-field="id"
+                            class="console-output console-scroller"
+                        >
+                            <template #default="{ item, index, active }">
+                                <DynamicScrollerItem
+                                    :item="item"
+                                    :active="active"
+                                    :data-index="index"
+                                >
+                                    <div :class="['console-line', `console-line-${item.type}`]">
+                                        <span class="console-timestamp">{{ item.time }}</span>
+                                        <span v-if="item.shard" class="console-shard-label"
+                                            >[{{ item.shard }}]</span
+                                        >
+                                        <span
+                                            :class="[
+                                                'console-type-label',
+                                                item.type === 'result'
+                                                    ? 'console-type-result'
+                                                    : 'console-type-log',
+                                            ]"
+                                            >{{ item.type }}</span
+                                        >
+                                        <span class="console-text" v-html="item.displayHtml"></span>
+                                    </div>
+                                </DynamicScrollerItem>
+                            </template>
+                        </DynamicScroller>
                     </el-card>
                 </div>
 
@@ -260,6 +269,8 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, nextTick } from "vue";
+import { DynamicScroller, DynamicScrollerItem } from "vue-virtual-scroller";
+import "vue-virtual-scroller/dist/vue-virtual-scroller.css";
 import PanelSidebar from "@/components/sidebar/PanelSidebar.vue";
 import type { SidebarCategory } from "@/components/sidebar/PanelSidebar.vue";
 import { ElMessage } from "element-plus";
@@ -278,6 +289,7 @@ import {
 // ==================== 类型定义 ====================
 
 interface ConsoleMessage {
+    id: number;
     type: "log" | "result";
     text: string;
     displayHtml: string;
@@ -385,12 +397,13 @@ function debugTagType(level: DebugLog["level"]): "info" | "warning" | "danger" |
 // ==================== 控制台消息 ====================
 
 const consoleMessages = ref<ConsoleMessage[]>([]);
-const shardFilter = ref<string | undefined>(undefined);
-const consoleOutputRef = ref<HTMLElement | null>(null);
+const shardFilter = ref<string>("");
+const consoleScrollerRef = ref<{ scrollToBottom: () => void } | null>(null);
 const availableShards = ref<string[]>([]);
+const consoleMsgIdCounter = ref(0);
 
 const filteredConsoleMessages = computed(() => {
-    if (!shardFilter.value) return consoleMessages.value;
+    if (shardFilter.value === "") return consoleMessages.value;
     return consoleMessages.value.filter((m) => m.shard === shardFilter.value);
 });
 
@@ -460,6 +473,7 @@ function addConsoleMessage(
     }
 
     consoleMessages.value.push({
+        id: ++consoleMsgIdCounter.value,
         type,
         text: cleanText,
         displayHtml,
@@ -470,10 +484,7 @@ function addConsoleMessage(
         consoleMessages.value = consoleMessages.value.slice(-500);
     }
     nextTick(() => {
-        consoleOutputRef.value?.scrollTo({
-            top: consoleOutputRef.value.scrollHeight,
-            behavior: "smooth",
-        });
+        consoleScrollerRef.value?.scrollToBottom();
     });
 }
 
@@ -887,12 +898,26 @@ onUnmounted(() => {
     font-family: "Cascadia Code", "Fira Code", "JetBrains Mono", Consolas, "Courier New", monospace;
     font-size: 0.85rem;
     line-height: 1.6;
-    padding: 0.75rem;
     border-radius: 4px;
     height: 400px;
-    overflow-y: auto;
-    white-space: pre-wrap;
-    word-break: break-all;
+}
+
+/* DynamicScroller 容器 */
+.console-scroller {
+    padding: 0.75rem;
+}
+
+/* DynamicScroller 内部 viewport — 覆盖库的默认背景 */
+.console-scroller :deep(.vue-recycle-scroller) {
+    background: transparent;
+}
+
+.console-scroller :deep(.vue-recycle-scroller__item-wrapper) {
+    background: transparent;
+}
+
+.console-scroller :deep(.vue-recycle-scroller__item-view) {
+    background: transparent;
 }
 
 .console-placeholder {
@@ -930,18 +955,34 @@ onUnmounted(() => {
     min-width: 4.2rem;
 }
 
-.console-shard-tag {
+.console-shard-label {
     flex-shrink: 0;
-    font-family: inherit;
     font-size: 0.75rem;
+    color: #409eff;
+    font-weight: 500;
 }
-.console-type-tag {
+
+.console-type-label {
     flex-shrink: 0;
-    font-family: inherit;
     font-size: 0.7rem;
+    font-weight: 500;
+    padding: 0 3px;
+    border-radius: 2px;
+}
+
+.console-type-result {
+    color: #67c23a;
+    background: rgba(103, 194, 58, 0.12);
+}
+
+.console-type-log {
+    color: #909399;
+    background: rgba(144, 147, 153, 0.1);
 }
 .console-text {
     flex: 1;
+    white-space: pre-wrap;
+    word-break: break-all;
     overflow-wrap: break-word;
 }
 
