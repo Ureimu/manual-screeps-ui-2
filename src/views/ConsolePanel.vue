@@ -786,18 +786,27 @@ function resendCommand(item: CommandHistoryItem): void {
 
 // ==================== 生命周期 ====================
 
+/** 关闭标签页 / 组件真正销毁时清理 WebSocket */
+function cleanupWs(): void {
+    cancelReconnect();
+    stopHeartbeat();
+    apiCloseWs(ws);
+    ws = null;
+}
+
 onMounted(() => {
     const savedToken = localStorage.getItem(STORAGE_KEY_TOKEN);
     const savedServer = localStorage.getItem(STORAGE_KEY_SERVER);
     if (savedToken) loginForm.value.token = savedToken;
     if (savedServer) loginForm.value.server = savedServer;
+
+    // 关闭标签页时断开 WebSocket（比 onUnmounted 更可靠地处理标签页关闭）
+    window.addEventListener("beforeunload", cleanupWs);
 });
 
 onUnmounted(() => {
-    cancelReconnect();
-    stopHeartbeat();
-    apiCloseWs(ws);
-    ws = null;
+    window.removeEventListener("beforeunload", cleanupWs);
+    cleanupWs();
 });
 </script>
 

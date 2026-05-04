@@ -1,7 +1,11 @@
 <template>
     <div id="app">
         <NavigationBar />
-        <RouterView />
+        <RouterView v-slot="{ Component }">
+            <KeepAlive include="ConsolePanel">
+                <component :is="Component" />
+            </KeepAlive>
+        </RouterView>
     </div>
 </template>
 
