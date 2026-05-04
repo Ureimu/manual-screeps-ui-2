@@ -1,5 +1,12 @@
 <template>
-    <div v-show="visible" :id="id" ref="chartContainer" class="chart-container"></div>
+    <div v-show="visible" class="chart-wrapper">
+        <ChartToolbar
+            v-model:mode="currentMode"
+            v-model:interval="currentInterval"
+            v-model:aggregate-axis="currentAggregateAxis"
+        />
+        <div :id="id" ref="chartContainer" class="chart-container"></div>
+    </div>
 </template>
 
 <script setup lang="ts">
@@ -20,6 +27,7 @@ import {
     calculateZoomRangeByPreset,
     type TimeRangePreset,
 } from "@/utils/chartPresets";
+import ChartToolbar from "@/components/echarts/ChartToolbar.vue";
 
 echarts.use([
     GridComponent,
@@ -56,6 +64,11 @@ const props = withDefaults(defineProps<Props>(), {
     interval: 1500,
     aggregateAxis: undefined,
 });
+
+// 本地响应式聚合选项，从 props 初始化
+const currentMode = ref<"none" | "average" | "sum">(props.mode);
+const currentInterval = ref<number>(props.interval);
+const currentAggregateAxis = ref<"time" | "tick" | undefined>(props.aggregateAxis);
 
 let chartInstance: echarts.ECharts | null = null;
 const chartContainer = ref<HTMLElement | null>(null);
@@ -165,13 +178,13 @@ function initChart(): void {
     }
 
     // 如果启用了聚合模式，处理数据
-    if (props.mode !== "none" && props.interval && props.interval > 0) {
+    if (currentMode.value !== "none" && currentInterval.value && currentInterval.value > 0) {
         fullDataList = fullDataList.map((seriesData) => {
             return calculateAggregateData(
                 seriesData,
-                props.interval,
-                props.mode,
-                props.aggregateAxis,
+                currentInterval.value,
+                currentMode.value,
+                currentAggregateAxis.value,
                 props.timeData,
                 props.gameTimeData,
             );
@@ -256,8 +269,8 @@ function initChart(): void {
         },
         title: {
             text:
-                props.mode !== "none" && props.interval && props.interval > 0
-                    ? `${props.name} (${props.mode === "average" ? "平均值" : "求和"}区间: ${props.interval}${props.aggregateAxis ? `${props.aggregateAxis === "time" ? "时间" : "tick"}` : axisType.value})`
+                currentMode.value !== "none" && currentInterval.value && currentInterval.value > 0
+                    ? `${props.name} (${currentMode.value === "average" ? "平均值" : "求和"}区间: ${currentInterval.value}${currentAggregateAxis.value ? `${currentAggregateAxis.value === "time" ? "时间" : "tick"}` : axisType.value})`
                     : props.name,
             top: "top",
             left: "center",
@@ -417,9 +430,9 @@ watch(
         props.yDataList,
         props.timeData,
         props.gameTimeData,
-        props.mode,
-        props.interval,
-        props.aggregateAxis,
+        currentMode.value,
+        currentInterval.value,
+        currentAggregateAxis.value,
     ],
     () => {
         if (props.visible) {
@@ -468,12 +481,16 @@ onBeforeUnmount(() => {
     color: gray;
 }
 
+.chart-wrapper {
+    border-radius: 4px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
 .chart-container {
     width: 100%;
     height: 100%;
     min-height: 360px;
     background: #ffffff;
-    border-radius: 4px;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
 }
 </style>

@@ -12,6 +12,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    ChartToolbar: typeof import('./src/components/echarts/ChartToolbar.vue')['default']
     ComparableLineChart: typeof import('./src/components/echarts/ComparableLineChart.vue')['default']
     ConfigObjectDisplay: typeof import('./src/components/config/displayType/ConfigObjectDisplay.vue')['default']
     ConfigResourcesDisplay: typeof import('./src/components/config/displayType/ConfigResourcesDisplay.vue')['default']
@@ -65,6 +66,7 @@ declare module 'vue' {
 
 // For TSX support
 declare global {
+  const ChartToolbar: typeof import('./src/components/echarts/ChartToolbar.vue')['default']
   const ComparableLineChart: typeof import('./src/components/echarts/ComparableLineChart.vue')['default']
   const ConfigObjectDisplay: typeof import('./src/components/config/displayType/ConfigObjectDisplay.vue')['default']
   const ConfigResourcesDisplay: typeof import('./src/components/config/displayType/ConfigResourcesDisplay.vue')['default']

@@ -558,15 +558,43 @@ const loadUploadedData = async (content: string): Promise<void> => {
 
         // 检查是否是 TypeScript 模块格式
         if (content.includes("export const testData")) {
-            // 提取 testData 的值
-            const match = content.match(/export const testData: OriginScreepsData = (.*?);/s);
-            if (match && match[1]) {
-                // 移除末尾的 "as unknown as OriginScreepsData"
-                const dataStr = match[1].replace(/\s+as unknown as OriginScreepsData\s*$/, "");
-                data = JSON.parse(decodeURIComponent(dataStr));
-            } else {
-                throw new Error("无法从 TypeScript 文件中提取 testData");
+            // 找到赋值语句中 JSON 对象的起始位置
+            const prefix = "export const testData: OriginScreepsData =";
+            const prefixIndex = content.indexOf(prefix);
+            if (prefixIndex === -1) {
+                throw new Error("无法找到 testData 导出语句");
             }
+
+            // 从 prefix 之后找到第一个 '{'
+            const braceStart = content.indexOf("{", prefixIndex + prefix.length);
+            if (braceStart === -1) {
+                throw new Error("无法找到 JSON 对象的起始位置");
+            }
+
+            // 通过大括号计数找到匹配的 '}'
+            let depth = 0;
+            let jsonEnd = -1;
+            for (let i = braceStart; i < content.length; i++) {
+                const ch = content[i];
+                if (ch === "{") {
+                    depth++;
+                } else if (ch === "}") {
+                    depth--;
+                    if (depth === 0) {
+                        jsonEnd = i;
+                        break;
+                    }
+                }
+            }
+
+            if (jsonEnd === -1) {
+                throw new Error("无法找到 JSON 对象的结束位置");
+            }
+
+            const dataStr = content.slice(braceStart, jsonEnd + 1);
+            // 不要对整个 JSON 调用 decodeURIComponent——外层是纯 JSON。
+            // 内层字符串（rawTimeSeriesData、memoryString）由 convertScreepsData 单独解码。
+            data = JSON.parse(dataStr);
         } else {
             // 尝试直接解析为 JSON
             data = JSON.parse(content);
