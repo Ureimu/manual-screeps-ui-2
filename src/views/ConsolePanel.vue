@@ -286,6 +286,7 @@ import {
     setCurrentServer,
     getUserShards,
 } from "@/utils/screepsApi";
+import { loadUploadedData } from "@/utils/uploadData";
 
 // ==================== 类型定义 ====================
 
@@ -412,6 +413,60 @@ const filteredConsoleMessages = computed(() => {
     return consoleMessages.value.filter((m) => m.shard === shardFilter.value);
 });
 
+// ==================== 消息触发器系统 ====================
+
+/** 消息触发器：匹配特定前缀的消息并自动执行回调 */
+interface MessageTrigger {
+    /** 用于匹配的前缀 */
+    prefix: string;
+    /** 触发时执行的回调，参数为完整消息文本（已剥离分片前缀）和分片 */
+    handler: (text: string, shard: string | null) => void;
+}
+
+/** 已注册的消息触发器列表 */
+const messageTriggers: MessageTrigger[] = [];
+
+/**
+ * 注册一个消息触发器。当控制台收到以指定前缀开头的消息时，自动调用 handler。
+ * @param prefix - 要匹配的消息前缀（只匹配纯文本，不考虑时间/分片等信息）
+ * @param handler - 匹配成功后执行的回调函数
+ */
+function registerMessageTrigger(prefix: string, handler: MessageTrigger["handler"]): void {
+    // 避免重复注册相同前缀
+    if (messageTriggers.some((t) => t.prefix === prefix)) {
+        addDebugLog("warn", `消息触发器 "${prefix}" 已存在，跳过重复注册`);
+        return;
+    }
+    messageTriggers.push({ prefix, handler });
+    addDebugLog("info", `已注册消息触发器: "${prefix}"`);
+}
+
+/**
+ * 取消注册一个消息触发器
+ * @param prefix - 要取消的前缀
+ */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function unregisterMessageTrigger(prefix: string): void {
+    const idx = messageTriggers.findIndex((t) => t.prefix === prefix);
+    if (idx !== -1) {
+        messageTriggers.splice(idx, 1);
+        addDebugLog("info", `已取消消息触发器: "${prefix}"`);
+    }
+}
+
+/** 遍历所有已注册触发器，检查消息是否匹配并执行对应回调 */
+function processMessageTriggers(text: string, shard: string | null): void {
+    for (const trigger of messageTriggers) {
+        if (text.startsWith(trigger.prefix)) {
+            try {
+                trigger.handler(text, shard);
+            } catch (e) {
+                addDebugLog("error", `消息触发器 "${trigger.prefix}" 执行异常: ${e}`);
+            }
+        }
+    }
+}
+
 // ==================== 命令 ====================
 
 const commandForm = ref({ shard: "", expression: "" });
@@ -496,6 +551,9 @@ function addConsoleMessage(
             }
         });
     }
+
+    // 检查消息是否匹配已注册的触发器
+    processMessageTriggers(cleanText, resolvedShard);
 }
 
 // ==================== 自动滚动 ====================
@@ -843,6 +901,33 @@ onMounted(() => {
     const savedServer = localStorage.getItem(STORAGE_KEY_SERVER);
     if (savedToken) loginForm.value.token = savedToken;
     if (savedServer) loginForm.value.server = savedServer;
+
+    // ===== 注册消息触发器 =====
+
+    // <ui data> 前缀：用于接收 UI 数据消息
+    registerMessageTrigger("<ui data>", async (text, shard) => {
+        addDebugLog("success", `[UI Data] 收到消息 (shard=${shard}): ${text.substring(0, 50)}...`);
+
+        // 剥离 "<ui data>" 前缀，提取实际数据内容
+        const dataContent = text.substring("<ui data>".length).trim();
+        if (!dataContent) {
+            addDebugLog("warn", "[UI Data] 消息内容为空，跳过处理");
+            return;
+        }
+
+        try {
+            const data = await loadUploadedData(dataContent);
+            addDebugLog(
+                "success",
+                `[UI Data] 数据加载成功！tick=${data.timeData?.tick}, shard=${data.shardData?.shardName}`,
+            );
+            ElMessage.success("UI 数据已接收并加载！");
+        } catch (error) {
+            const msg = error instanceof Error ? error.message : "未知错误";
+            addDebugLog("error", `[UI Data] 解析失败: ${msg}`);
+            ElMessage.error(`UI 数据解析失败: ${msg}`);
+        }
+    });
 
     // 关闭标签页时断开 WebSocket（比 onUnmounted 更可靠地处理标签页关闭）
     window.addEventListener("beforeunload", cleanupWs);

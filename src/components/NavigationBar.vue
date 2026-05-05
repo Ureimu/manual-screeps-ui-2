@@ -266,8 +266,7 @@ import { useAppStore } from "@/stores/app";
 import { House, View, Location, DataAnalysis, Monitor } from "@element-plus/icons-vue";
 import { ElMessage } from "element-plus";
 import { getAllPresets, type TimeRangePreset } from "@/utils/chartPresets";
-import { convertScreepsData } from "@/utils/convertScreepsData";
-import type { OriginScreepsData } from "@/type/player/AI/AIUreium/ui/type";
+import { loadUploadedData } from "@/utils/uploadData";
 
 const router = useRouter();
 const route = useRoute();
@@ -486,10 +485,9 @@ const openUploadDialog = (): void => {
 
         try {
             const content = await file.text();
-            await loadUploadedData(content);
+            await loadAndApplyUploadedData(content);
         } catch (error) {
             console.error("上传数据时出错:", error);
-            ElMessage.error("上传数据失败，请检查文件格式");
         }
     };
 
@@ -519,7 +517,8 @@ const handleUploadRequest = async (options: {
 
     try {
         const content = await readFileAsText(file);
-        await loadUploadedData(content);
+        const data = await loadUploadedData(content);
+        console.log("数据上传成功并已加载", data);
         onSuccess("上传成功");
     } catch (error) {
         console.error("上传失败:", error);
@@ -550,63 +549,10 @@ const readFileAsText = (file: File): Promise<string> => {
     });
 };
 
-// 加载上传的数据
-const loadUploadedData = async (content: string): Promise<void> => {
+// 加载上传的数据（委托至工具函数，额外处理 UI 反馈与房间导航）
+const loadAndApplyUploadedData = async (content: string): Promise<void> => {
     try {
-        // 尝试解析上传的文件内容
-        let data: OriginScreepsData;
-
-        // 检查是否是 TypeScript 模块格式
-        if (content.includes("export const testData")) {
-            // 找到赋值语句中 JSON 对象的起始位置
-            const prefix = "export const testData: OriginScreepsData =";
-            const prefixIndex = content.indexOf(prefix);
-            if (prefixIndex === -1) {
-                throw new Error("无法找到 testData 导出语句");
-            }
-
-            // 从 prefix 之后找到第一个 '{'
-            const braceStart = content.indexOf("{", prefixIndex + prefix.length);
-            if (braceStart === -1) {
-                throw new Error("无法找到 JSON 对象的起始位置");
-            }
-
-            // 通过大括号计数找到匹配的 '}'
-            let depth = 0;
-            let jsonEnd = -1;
-            for (let i = braceStart; i < content.length; i++) {
-                const ch = content[i];
-                if (ch === "{") {
-                    depth++;
-                } else if (ch === "}") {
-                    depth--;
-                    if (depth === 0) {
-                        jsonEnd = i;
-                        break;
-                    }
-                }
-            }
-
-            if (jsonEnd === -1) {
-                throw new Error("无法找到 JSON 对象的结束位置");
-            }
-
-            const dataStr = content.slice(braceStart, jsonEnd + 1);
-            // 不要对整个 JSON 调用 decodeURIComponent——外层是纯 JSON。
-            // 内层字符串（rawTimeSeriesData、memoryString）由 convertScreepsData 单独解码。
-            data = JSON.parse(dataStr);
-        } else {
-            // 尝试直接解析为 JSON
-            data = JSON.parse(content);
-        }
-
-        // 验证数据格式
-        if (!data.type || data.type !== "OriginScreepsData") {
-            throw new Error("无效的数据格式：缺少 OriginScreepsData 类型标识");
-        }
-
-        // 更新 store 中的数据
-        appStore.setScreepsData(convertScreepsData(data));
+        const data = await loadUploadedData(content);
         console.log("数据上传成功并已加载", data);
 
         // 显示成功消息
