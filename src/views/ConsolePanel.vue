@@ -130,6 +130,14 @@
                                     >
                                         复制
                                     </el-button>
+                                    <el-button
+                                        size="small"
+                                        :type="autoScroll ? 'primary' : 'default'"
+                                        :title="autoScroll ? '自动滚动已开启' : '自动滚动已关闭'"
+                                        @click="toggleAutoScroll"
+                                    >
+                                        自动滚动
+                                    </el-button>
                                 </div>
                             </div>
                         </template>
@@ -139,39 +147,33 @@
                         >
                             <el-empty description="暂无控制台消息" :image-size="80" />
                         </div>
-                        <DynamicScroller
+                        <div
                             v-else
-                            ref="consoleScrollerRef"
-                            :items="filteredConsoleMessages"
-                            :min-item-size="28"
-                            key-field="id"
-                            class="console-output console-scroller"
+                            ref="consoleListRef"
+                            class="console-output console-list"
+                            @scroll="handleConsoleScroll"
                         >
-                            <template #default="{ item, index, active }">
-                                <DynamicScrollerItem
-                                    :item="item"
-                                    :active="active"
-                                    :data-index="index"
+                            <div
+                                v-for="item in filteredConsoleMessages"
+                                :key="item.id"
+                                :class="['console-line', `console-line-${item.type}`]"
+                            >
+                                <span class="console-timestamp">{{ item.time }}</span>
+                                <span v-if="item.shard" class="console-shard-label"
+                                    >[{{ item.shard }}]</span
                                 >
-                                    <div :class="['console-line', `console-line-${item.type}`]">
-                                        <span class="console-timestamp">{{ item.time }}</span>
-                                        <span v-if="item.shard" class="console-shard-label"
-                                            >[{{ item.shard }}]</span
-                                        >
-                                        <span
-                                            :class="[
-                                                'console-type-label',
-                                                item.type === 'result'
-                                                    ? 'console-type-result'
-                                                    : 'console-type-log',
-                                            ]"
-                                            >{{ item.type }}</span
-                                        >
-                                        <span class="console-text" v-html="item.displayHtml"></span>
-                                    </div>
-                                </DynamicScrollerItem>
-                            </template>
-                        </DynamicScroller>
+                                <span
+                                    :class="[
+                                        'console-type-label',
+                                        item.type === 'result'
+                                            ? 'console-type-result'
+                                            : 'console-type-log',
+                                    ]"
+                                    >{{ item.type }}</span
+                                >
+                                <span class="console-text" v-html="item.displayHtml"></span>
+                            </div>
+                        </div>
                     </el-card>
                 </div>
 
@@ -269,8 +271,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, nextTick } from "vue";
-import { DynamicScroller, DynamicScrollerItem } from "vue-virtual-scroller";
-import "vue-virtual-scroller/dist/vue-virtual-scroller.css";
+
 import PanelSidebar from "@/components/sidebar/PanelSidebar.vue";
 import type { SidebarCategory } from "@/components/sidebar/PanelSidebar.vue";
 import { ElMessage } from "element-plus";
@@ -378,6 +379,9 @@ function addDebugLog(level: DebugLog["level"], message: string): void {
     const pad = (n: number) => (n < 10 ? `0${n}` : `${n}`);
     const time = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
     debugLogs.value.push({ level, message, time });
+    if (debugLogs.value.length > 100) {
+        debugLogs.value = debugLogs.value.slice(-100);
+    }
     console.log(`[ConsolePanel][${level}] ${message}`);
 }
 
@@ -398,9 +402,10 @@ function debugTagType(level: DebugLog["level"]): "info" | "warning" | "danger" |
 
 const consoleMessages = ref<ConsoleMessage[]>([]);
 const shardFilter = ref<string>("");
-const consoleScrollerRef = ref<{ scrollToBottom: () => void } | null>(null);
+const consoleListRef = ref<HTMLElement | null>(null);
 const availableShards = ref<string[]>([]);
 const consoleMsgIdCounter = ref(0);
+const autoScroll = ref(true);
 
 const filteredConsoleMessages = computed(() => {
     if (shardFilter.value === "") return consoleMessages.value;
@@ -480,12 +485,40 @@ function addConsoleMessage(
         shard: resolvedShard,
         time: formatTime(),
     });
-    if (consoleMessages.value.length > 1000) {
-        consoleMessages.value = consoleMessages.value.slice(-500);
+    if (consoleMessages.value.length > 100) {
+        consoleMessages.value = consoleMessages.value.slice(-100);
     }
-    nextTick(() => {
-        consoleScrollerRef.value?.scrollToBottom();
-    });
+    if (autoScroll.value) {
+        nextTick(() => {
+            const el = consoleListRef.value;
+            if (el) {
+                el.scrollTop = el.scrollHeight;
+            }
+        });
+    }
+}
+
+// ==================== 自动滚动 ====================
+
+const SCROLL_AT_BOTTOM_THRESHOLD = 20;
+
+function handleConsoleScroll(): void {
+    const el = consoleListRef.value;
+    if (!el) return;
+    const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - SCROLL_AT_BOTTOM_THRESHOLD;
+    autoScroll.value = atBottom;
+}
+
+function toggleAutoScroll(): void {
+    autoScroll.value = !autoScroll.value;
+    if (autoScroll.value) {
+        nextTick(() => {
+            const el = consoleListRef.value;
+            if (el) {
+                el.scrollTop = el.scrollHeight;
+            }
+        });
+    }
 }
 
 // ==================== 重连逻辑 ====================
@@ -902,22 +935,10 @@ onUnmounted(() => {
     height: 400px;
 }
 
-/* DynamicScroller 容器 */
-.console-scroller {
+/* 控制台消息列表 */
+.console-list {
     padding: 0.75rem;
-}
-
-/* DynamicScroller 内部 viewport — 覆盖库的默认背景 */
-.console-scroller :deep(.vue-recycle-scroller) {
-    background: transparent;
-}
-
-.console-scroller :deep(.vue-recycle-scroller__item-wrapper) {
-    background: transparent;
-}
-
-.console-scroller :deep(.vue-recycle-scroller__item-view) {
-    background: transparent;
+    overflow-y: auto;
 }
 
 .console-placeholder {
