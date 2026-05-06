@@ -420,7 +420,11 @@ interface MessageTrigger {
     /** 用于匹配的前缀 */
     prefix: string;
     /** 触发时执行的回调，参数为完整消息文本（已剥离分片前缀）和分片 */
-    handler: (text: string, shard: string | null) => void;
+    handler: (text: string, shard: string | null) => void | Promise<void>;
+    /** 是否抑制该前缀消息在控制台中的输出（默认 false，即正常输出） */
+    suppressConsoleOutput?: boolean;
+    /** 是否在控制台消息列表中输出触发器执行成功的消息（默认 false） */
+    logTriggerSuccess?: boolean;
 }
 
 /** 已注册的消息触发器列表 */
@@ -430,15 +434,33 @@ const messageTriggers: MessageTrigger[] = [];
  * 注册一个消息触发器。当控制台收到以指定前缀开头的消息时，自动调用 handler。
  * @param prefix - 要匹配的消息前缀（只匹配纯文本，不考虑时间/分片等信息）
  * @param handler - 匹配成功后执行的回调函数
+ * @param options - 可选配置
+ * @param options.suppressConsoleOutput - 若为 true，该前缀的消息不会显示在控制台输出中
+ * @param options.logTriggerSuccess - 若为 true，handler 执行成功后自动在控制台输出一条成功消息
  */
-function registerMessageTrigger(prefix: string, handler: MessageTrigger["handler"]): void {
+function registerMessageTrigger(
+    prefix: string,
+    handler: MessageTrigger["handler"],
+    options?: { suppressConsoleOutput?: boolean; logTriggerSuccess?: boolean },
+): void {
     // 避免重复注册相同前缀
     if (messageTriggers.some((t) => t.prefix === prefix)) {
         addDebugLog("warn", `消息触发器 "${prefix}" 已存在，跳过重复注册`);
         return;
     }
-    messageTriggers.push({ prefix, handler });
-    addDebugLog("info", `已注册消息触发器: "${prefix}"`);
+    messageTriggers.push({
+        prefix,
+        handler,
+        suppressConsoleOutput: options?.suppressConsoleOutput ?? false,
+        logTriggerSuccess: options?.logTriggerSuccess ?? false,
+    });
+    const flags: string[] = [];
+    if (options?.suppressConsoleOutput) flags.push("抑制控制台输出");
+    if (options?.logTriggerSuccess) flags.push("记录触发成功");
+    addDebugLog(
+        "info",
+        `已注册消息触发器: "${prefix}"${flags.length > 0 ? ` (${flags.join(", ")})` : ""}`,
+    );
 }
 
 /**
@@ -454,15 +476,56 @@ function unregisterMessageTrigger(prefix: string): void {
     }
 }
 
-/** 遍历所有已注册触发器，检查消息是否匹配并执行对应回调 */
-function processMessageTriggers(text: string, shard: string | null): void {
+/**
+ * 同步检查：消息是否被任意触发器的 suppressConsoleOutput 抑制。
+ */
+function checkMessageSuppression(text: string): boolean {
     for (const trigger of messageTriggers) {
-        if (text.startsWith(trigger.prefix)) {
-            try {
-                trigger.handler(text, shard);
-            } catch (e) {
-                addDebugLog("error", `消息触发器 "${trigger.prefix}" 执行异常: ${e}`);
+        if (text.startsWith(trigger.prefix) && trigger.suppressConsoleOutput) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/**
+ * 执行匹配的触发器回调。
+ * - 同步 handler：直接执行，异常由 try/catch 捕获
+ * - 异步 handler：fire-and-forget，通过 .then/.catch 处理后续
+ * - logTriggerSuccess 的消息在 handler 完成后推入控制台消息列表
+ */
+function executeMessageTriggers(text: string, shard: string | null): void {
+    for (const trigger of messageTriggers) {
+        if (!text.startsWith(trigger.prefix)) continue;
+
+        const onSuccess = () => {
+            if (trigger.logTriggerSuccess) {
+                consoleMessages.value.push({
+                    id: ++consoleMsgIdCounter.value,
+                    type: "log",
+                    text: `触发器 "${trigger.prefix}" 执行成功`,
+                    displayHtml: `触发器 &quot;${trigger.prefix}&quot; 执行成功`,
+                    shard,
+                    time: formatTime(),
+                });
+                if (consoleMessages.value.length > 100) {
+                    consoleMessages.value = consoleMessages.value.slice(-100);
+                }
             }
+        };
+        const onError = (e: unknown) => {
+            addDebugLog("error", `消息触发器 "${trigger.prefix}" 执行异常: ${e}`);
+        };
+
+        try {
+            const result = trigger.handler(text, shard);
+            if (result instanceof Promise) {
+                result.then(onSuccess).catch(onError);
+            } else {
+                onSuccess();
+            }
+        } catch (e) {
+            onError(e);
         }
     }
 }
@@ -503,10 +566,6 @@ function extractShard(text: string): string | undefined {
     return undefined;
 }
 
-function stripShardPrefix(text: string): string {
-    return text.replace(/^\[[^\]]+\]\s*/, "").replace(/^\([^)]+\)\s*/, "");
-}
-
 function parseConsoleHtml(text: string): string {
     let html = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     html = html.replace(/&lt;text\s+style="color:\s*([^"]+?)"\s*&gt;/g, '<span style="color: $1">');
@@ -521,16 +580,24 @@ function addConsoleMessage(
     explicitShard?: string | null,
 ): void {
     const shard = explicitShard ?? extractShard(text);
-    const cleanText = stripShardPrefix(text);
+    const cleanText = text;
     const resolvedShard = shard || commandForm.value.shard || null;
-    const displayHtml = parseConsoleHtml(cleanText);
 
+    // 更新可用分片列表（无论是否抑制输出都需要）
     if (resolvedShard && !availableShards.value.includes(resolvedShard)) {
         availableShards.value.push(resolvedShard);
         if (availableShards.value.length === 1) {
             commandForm.value.shard = resolvedShard;
         }
     }
+
+    // 同步检查抑制：若匹配的触发器要求抑制，只执行回调而不添加原始消息到控制台
+    if (checkMessageSuppression(cleanText)) {
+        executeMessageTriggers(cleanText, resolvedShard);
+        return;
+    }
+
+    const displayHtml = parseConsoleHtml(cleanText);
 
     consoleMessages.value.push({
         id: ++consoleMsgIdCounter.value,
@@ -552,8 +619,8 @@ function addConsoleMessage(
         });
     }
 
-    // 检查消息是否匹配已注册的触发器
-    processMessageTriggers(cleanText, resolvedShard);
+    // 执行匹配的触发器（非抑制路径）
+    executeMessageTriggers(cleanText, resolvedShard);
 }
 
 // ==================== 自动滚动 ====================
@@ -904,30 +971,37 @@ onMounted(() => {
 
     // ===== 注册消息触发器 =====
 
-    // <ui data> 前缀：用于接收 UI 数据消息
-    registerMessageTrigger("<ui data>", async (text, shard) => {
-        addDebugLog("success", `[UI Data] 收到消息 (shard=${shard}): ${text.substring(0, 50)}...`);
-
-        // 剥离 "<ui data>" 前缀，提取实际数据内容
-        const dataContent = text.substring("<ui data>".length).trim();
-        if (!dataContent) {
-            addDebugLog("warn", "[UI Data] 消息内容为空，跳过处理");
-            return;
-        }
-
-        try {
-            const data = await loadUploadedData(dataContent);
+    // (ui data) 前缀：用于接收 UI 数据消息（抑制控制台输出，避免大量数据刷屏）
+    registerMessageTrigger(
+        "(ui data)",
+        async (text, shard) => {
             addDebugLog(
                 "success",
-                `[UI Data] 数据加载成功！tick=${data.timeData?.tick}, shard=${data.shardData?.shardName}`,
+                `[UI Data] 收到消息 (shard=${shard}): ${text.substring(0, 50)}...`,
             );
-            ElMessage.success("UI 数据已接收并加载！");
-        } catch (error) {
-            const msg = error instanceof Error ? error.message : "未知错误";
-            addDebugLog("error", `[UI Data] 解析失败: ${msg}`);
-            ElMessage.error(`UI 数据解析失败: ${msg}`);
-        }
-    });
+
+            // 剥离 "(ui data)" 前缀，提取实际数据内容
+            const dataContent = text.substring("(ui data)".length).trim();
+            if (!dataContent) {
+                addDebugLog("warn", "[UI Data] 消息内容为空，跳过处理");
+                return;
+            }
+
+            try {
+                const data = await loadUploadedData(dataContent);
+                addDebugLog(
+                    "success",
+                    `[UI Data] 数据加载成功！tick=${data.timeData?.tick}, shard=${data.shardData?.shardName}`,
+                );
+                ElMessage.success("UI 数据已接收并加载！");
+            } catch (error) {
+                const msg = error instanceof Error ? error.message : "未知错误";
+                addDebugLog("error", `[UI Data] 解析失败: ${msg}`);
+                ElMessage.error(`UI 数据解析失败: ${msg}`);
+            }
+        },
+        { suppressConsoleOutput: true, logTriggerSuccess: true },
+    );
 
     // 关闭标签页时断开 WebSocket（比 onUnmounted 更可靠地处理标签页关闭）
     window.addEventListener("beforeunload", cleanupWs);

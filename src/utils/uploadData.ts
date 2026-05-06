@@ -33,9 +33,18 @@ export async function loadUploadedData(content: string): Promise<OriginScreepsDa
         }
 
         // 从 prefix 之后找到第一个 '{'
-        const braceStart = content.indexOf("{", prefixIndex + prefix.length);
+        let braceStart = content.indexOf("{", prefixIndex + prefix.length);
         if (braceStart === -1) {
-            throw new Error("无法找到 JSON 对象的起始位置");
+            // 原始内容中找不到，尝试 decodeURIComponent 解码后再查找
+            content = decodeURIComponent(content);
+            // 重新定位 prefix（解码后位置可能变化）
+            const decodedPrefixIndex = content.indexOf(prefix);
+            if (decodedPrefixIndex !== -1) {
+                braceStart = content.indexOf("{", decodedPrefixIndex + prefix.length);
+            }
+            if (braceStart === -1) {
+                throw new Error("无法找到 JSON 对象的起始位置");
+            }
         }
 
         // 通过大括号计数找到匹配的 '}'
