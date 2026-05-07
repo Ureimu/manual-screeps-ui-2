@@ -16,7 +16,19 @@
                         </template>
                         <div class="login-form">
                             <el-form :model="loginForm" label-width="80px" label-position="top">
-                                <el-form-item label="Token">
+                                <el-form-item label="登录方式">
+                                    <el-radio-group
+                                        v-model="loginForm.loginMethod"
+                                        :disabled="wsConnected"
+                                    >
+                                        <el-radio value="token">Token 登录</el-radio>
+                                        <el-radio value="password">邮箱密码登录</el-radio>
+                                    </el-radio-group>
+                                </el-form-item>
+                                <el-form-item
+                                    v-if="loginForm.loginMethod === 'token'"
+                                    label="Token"
+                                >
                                     <el-input
                                         v-model="loginForm.token"
                                         type="password"
@@ -25,8 +37,38 @@
                                         :disabled="wsConnected"
                                     />
                                 </el-form-item>
+                                <template v-if="loginForm.loginMethod === 'password'">
+                                    <el-form-item label="邮箱">
+                                        <el-input
+                                            v-model="loginForm.email"
+                                            placeholder="输入邮箱地址"
+                                            :disabled="wsConnected"
+                                        />
+                                    </el-form-item>
+                                    <el-form-item label="密码">
+                                        <el-input
+                                            v-model="loginForm.password"
+                                            type="password"
+                                            show-password
+                                            placeholder="输入密码"
+                                            :disabled="wsConnected"
+                                        />
+                                    </el-form-item>
+                                    <el-form-item>
+                                        <el-checkbox
+                                            v-model="loginForm.rememberPassword"
+                                            :disabled="wsConnected"
+                                        >
+                                            记住密码
+                                        </el-checkbox>
+                                    </el-form-item>
+                                </template>
                                 <el-form-item label="服务器">
-                                    <el-select v-model="loginForm.server" :disabled="wsConnected">
+                                    <el-select
+                                        v-model="loginForm.server"
+                                        :disabled="wsConnected"
+                                        @change="handleServerChange"
+                                    >
                                         <el-option
                                             label="screeps.com (官方服)"
                                             value="screeps.com"
@@ -35,7 +77,32 @@
                                             label="screeps.com/ptr (PTR 测试服)"
                                             value="screeps.com/ptr"
                                         />
+                                        <el-option
+                                            label="本地服务器 (127.0.0.1:21025)"
+                                            value="127.0.0.1:21025"
+                                        />
+                                        <el-option label="自定义..." value="__custom__" />
                                     </el-select>
+                                </el-form-item>
+                                <el-form-item
+                                    v-if="loginForm.server === '__custom__'"
+                                    label="自定义服务器"
+                                >
+                                    <div class="custom-server-inputs">
+                                        <el-input
+                                            v-model="loginForm.customHost"
+                                            placeholder="主机地址 (如 127.0.0.1)"
+                                            :disabled="wsConnected"
+                                            class="custom-host-input"
+                                        />
+                                        <span class="custom-server-separator">:</span>
+                                        <el-input
+                                            v-model="loginForm.customPort"
+                                            placeholder="端口 (如 21025)"
+                                            :disabled="wsConnected"
+                                            class="custom-port-input"
+                                        />
+                                    </div>
                                 </el-form-item>
                                 <el-form-item>
                                     <el-button
@@ -50,7 +117,7 @@
                                         断开
                                     </el-button>
                                     <el-button @click="handleClearToken" :disabled="wsConnected">
-                                        清除Token
+                                        清除凭据
                                     </el-button>
                                 </el-form-item>
                             </el-form>
@@ -229,6 +296,32 @@
                     </el-card>
                 </div>
 
+                <!-- 命令工具箱 -->
+                <div ref="toolboxRef" class="section-anchor">
+                    <el-card class="console-card">
+                        <template #header>
+                            <span>命令工具箱</span>
+                        </template>
+                        <div class="toolbox-list">
+                            <div v-for="cmd in toolboxCommands" :key="cmd.id" class="toolbox-item">
+                                <div class="toolbox-item-header">
+                                    <span class="toolbox-item-name">{{ cmd.label }}</span>
+                                    <el-tag size="small" type="info">{{ cmd.id }}</el-tag>
+                                </div>
+                                <div class="toolbox-item-desc">{{ cmd.description }}</div>
+                                <el-button
+                                    size="small"
+                                    type="primary"
+                                    :disabled="!wsConnected"
+                                    @click="executeToolboxCommand(cmd)"
+                                >
+                                    执行
+                                </el-button>
+                            </div>
+                        </div>
+                    </el-card>
+                </div>
+
                 <!-- 历史命令 -->
                 <div ref="historyRef" class="section-anchor">
                     <el-card class="console-card">
@@ -277,6 +370,7 @@ import type { SidebarCategory } from "@/components/sidebar/PanelSidebar.vue";
 import { ElMessage } from "element-plus";
 import {
     getPlayerInfo,
+    getSessionToken,
     initWebSocket,
     authSessionToken,
     subscribeConsole,
@@ -319,12 +413,14 @@ const mainContentRef = ref<HTMLElement | null>(null);
 const loginRef = ref<HTMLElement | null>(null);
 const consoleRef = ref<HTMLElement | null>(null);
 const commandRef = ref<HTMLElement | null>(null);
+const toolboxRef = ref<HTMLElement | null>(null);
 const historyRef = ref<HTMLElement | null>(null);
 
 const categoryRefMap: Record<string, ReturnType<typeof ref<HTMLElement | null>>> = {
     login: loginRef,
     console: consoleRef,
     command: commandRef,
+    toolbox: toolboxRef,
     history: historyRef,
 };
 
@@ -332,6 +428,7 @@ const sidebarCategories = computed<SidebarCategory[]>(() => [
     { key: "login", label: "连接设置" },
     { key: "console", label: "控制台输出" },
     { key: "command", label: "发送命令" },
+    { key: "toolbox", label: "命令工具箱" },
     { key: "history", label: "历史命令" },
 ]);
 
@@ -345,10 +442,24 @@ function scrollToCategory(key: string): void {
 const STORAGE_KEY_TOKEN = "screeps-console-token";
 const STORAGE_KEY_SERVER = "screeps-console-server";
 const STORAGE_KEY_HISTORY = "screeps-console-history";
+const STORAGE_KEY_CUSTOM_HOST = "screeps-console-custom-host";
+const STORAGE_KEY_CUSTOM_PORT = "screeps-console-custom-port";
+const STORAGE_KEY_LOGIN_METHOD = "screeps-console-login-method";
+const STORAGE_KEY_EMAIL = "screeps-console-email";
+const STORAGE_KEY_REMEMBER_PASSWORD = "screeps-console-remember-password";
+const STORAGE_KEY_PASSWORD = "screeps-console-password";
 
 const loginForm = ref({
+    loginMethod: (localStorage.getItem(STORAGE_KEY_LOGIN_METHOD) || "token") as
+        | "token"
+        | "password",
     token: localStorage.getItem(STORAGE_KEY_TOKEN) || "",
+    email: localStorage.getItem(STORAGE_KEY_EMAIL) || "",
+    password: "",
+    rememberPassword: localStorage.getItem(STORAGE_KEY_REMEMBER_PASSWORD) === "true",
     server: localStorage.getItem(STORAGE_KEY_SERVER) || "screeps.com",
+    customHost: localStorage.getItem(STORAGE_KEY_CUSTOM_HOST) || "127.0.0.1",
+    customPort: localStorage.getItem(STORAGE_KEY_CUSTOM_PORT) || "21025",
 });
 
 const wsConnected = ref(false);
@@ -530,6 +641,34 @@ function executeMessageTriggers(text: string, shard: string | null): void {
     }
 }
 
+// ==================== 命令工具箱 ====================
+
+interface ToolboxCommand {
+    id: string;
+    label: string;
+    description: string;
+    expression: string;
+}
+
+const toolboxCommands = ref<ToolboxCommand[]>([
+    {
+        id: "uiDataDownload",
+        label: "更新 UI 数据",
+        description: "更新当前 shard 的数据到 UI 面板",
+        expression: "uiDataDownload",
+    },
+]);
+
+function executeToolboxCommand(cmd: ToolboxCommand): void {
+    // 自动选择一个分片
+    if (!commandForm.value.shard && availableShards.value.length > 0) {
+        commandForm.value.shard = availableShards.value[0]!;
+    }
+    // 填充命令表达式，复用 handleSendCommand 的发送/历史/错误处理
+    commandForm.value.expression = cmd.expression;
+    handleSendCommand();
+}
+
 // ==================== 命令 ====================
 
 const commandForm = ref({ shard: "", expression: "" });
@@ -664,24 +803,93 @@ function cancelReconnect(): void {
 
 // ==================== 连接 ====================
 
-async function handleConnect(): Promise<void> {
-    const token = loginForm.value.token.trim();
-    const server = loginForm.value.server;
+/** 根据 loginForm 解析出实际使用的服务器字符串 */
+function resolveServer(): string {
+    if (loginForm.value.server === "__custom__") {
+        const host = loginForm.value.customHost.trim();
+        const port = loginForm.value.customPort.trim();
+        if (!host || !port) return "";
+        return `${host}:${port}`;
+    }
+    return loginForm.value.server;
+}
 
-    if (!token) {
-        ElMessage.warning("请输入 Token");
+/** 服务器选择切换时，保存自定义配置到 localStorage */
+function handleServerChange(): void {
+    localStorage.setItem(STORAGE_KEY_SERVER, loginForm.value.server);
+    localStorage.setItem(STORAGE_KEY_CUSTOM_HOST, loginForm.value.customHost);
+    localStorage.setItem(STORAGE_KEY_CUSTOM_PORT, loginForm.value.customPort);
+}
+
+async function handleConnect(): Promise<void> {
+    const server = resolveServer();
+
+    if (!server) {
+        ElMessage.warning("请输入自定义服务器的主机地址和端口");
         return;
     }
 
-    // 保存 & 通知 API 模块当前服务器
-    localStorage.setItem(STORAGE_KEY_TOKEN, token);
-    localStorage.setItem(STORAGE_KEY_SERVER, server);
+    // 保存服务器设置
+    localStorage.setItem(STORAGE_KEY_SERVER, loginForm.value.server);
+    localStorage.setItem(STORAGE_KEY_CUSTOM_HOST, loginForm.value.customHost);
+    localStorage.setItem(STORAGE_KEY_CUSTOM_PORT, loginForm.value.customPort);
+    localStorage.setItem(STORAGE_KEY_LOGIN_METHOD, loginForm.value.loginMethod);
     setCurrentServer(server);
 
     connecting.value = true;
 
-    addDebugLog("info", `服务器: ${server}`);
-    addDebugLog("info", `Token: ${token.substring(0, 8)}... (${token.length}字符)`);
+    // 根据登录方式获取 token
+    let token: string;
+    if (loginForm.value.loginMethod === "password") {
+        const email = loginForm.value.email.trim();
+        const password = loginForm.value.password;
+        if (!email) {
+            connecting.value = false;
+            ElMessage.warning("请输入邮箱");
+            return;
+        }
+        if (!password) {
+            connecting.value = false;
+            ElMessage.warning("请输入密码");
+            return;
+        }
+        addDebugLog("info", `服务器: ${server}`);
+        addDebugLog("info", `邮箱登录: ${email}`);
+        try {
+            addDebugLog("info", "正在通过邮箱密码获取 Token...");
+            token = await getSessionToken(email, password);
+            addDebugLog("success", `Token 获取成功 (${token.length}字符)`);
+            // 保存获取到的 token 和邮箱
+            localStorage.setItem(STORAGE_KEY_TOKEN, token);
+            localStorage.setItem(STORAGE_KEY_EMAIL, email);
+            localStorage.setItem(
+                STORAGE_KEY_REMEMBER_PASSWORD,
+                String(loginForm.value.rememberPassword),
+            );
+            if (loginForm.value.rememberPassword) {
+                localStorage.setItem(STORAGE_KEY_PASSWORD, password);
+            } else {
+                localStorage.removeItem(STORAGE_KEY_PASSWORD);
+            }
+            loginForm.value.token = token;
+        } catch (error) {
+            connecting.value = false;
+            const msg = error instanceof Error ? error.message : "登录失败";
+            addDebugLog("error", `邮箱登录失败: ${msg}`);
+            ElMessage.error(msg);
+            return;
+        }
+    } else {
+        token = loginForm.value.token.trim();
+        if (!token) {
+            connecting.value = false;
+            ElMessage.warning("请输入 Token");
+            return;
+        }
+        localStorage.setItem(STORAGE_KEY_TOKEN, token);
+        addDebugLog("info", `服务器: ${server}`);
+        addDebugLog("info", `Token: ${token.substring(0, 8)}... (${token.length}字符)`);
+    }
 
     try {
         // ===== step 1: 获取玩家信息 =====
@@ -860,8 +1068,14 @@ function handleDisconnect(): void {
 
 function handleClearToken(): void {
     loginForm.value.token = "";
+    loginForm.value.email = "";
+    loginForm.value.password = "";
+    loginForm.value.rememberPassword = false;
     localStorage.removeItem(STORAGE_KEY_TOKEN);
-    ElMessage.info("Token 已清除");
+    localStorage.removeItem(STORAGE_KEY_EMAIL);
+    localStorage.removeItem(STORAGE_KEY_PASSWORD);
+    localStorage.removeItem(STORAGE_KEY_REMEMBER_PASSWORD);
+    ElMessage.info("凭据已清除");
 }
 
 // ==================== 发送命令 ====================
@@ -966,8 +1180,17 @@ function cleanupWs(): void {
 onMounted(() => {
     const savedToken = localStorage.getItem(STORAGE_KEY_TOKEN);
     const savedServer = localStorage.getItem(STORAGE_KEY_SERVER);
+    const savedLoginMethod = localStorage.getItem(STORAGE_KEY_LOGIN_METHOD);
+    const savedEmail = localStorage.getItem(STORAGE_KEY_EMAIL);
     if (savedToken) loginForm.value.token = savedToken;
     if (savedServer) loginForm.value.server = savedServer;
+    if (savedLoginMethod) loginForm.value.loginMethod = savedLoginMethod as "token" | "password";
+    if (savedEmail) loginForm.value.email = savedEmail;
+    // 恢复已保存的密码
+    if (loginForm.value.rememberPassword) {
+        const savedPassword = localStorage.getItem(STORAGE_KEY_PASSWORD);
+        if (savedPassword) loginForm.value.password = savedPassword;
+    }
 
     // ===== 注册消息触发器 =====
 
@@ -1046,6 +1269,28 @@ onUnmounted(() => {
 
 .login-form {
     max-width: 500px;
+}
+
+.custom-server-inputs {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.custom-host-input {
+    flex: 1;
+}
+
+.custom-server-separator {
+    font-size: 18px;
+    font-weight: bold;
+    color: #909399;
+    margin: 0 2px;
+}
+
+.custom-port-input {
+    width: 140px;
+    flex-shrink: 0;
 }
 
 .connection-status {
@@ -1190,6 +1435,48 @@ onUnmounted(() => {
     font-size: 0.8rem;
     color: #909399;
     margin-left: 0.75rem;
+}
+
+/* ==================== 命令工具箱 ==================== */
+
+.toolbox-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.toolbox-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem;
+    border: 1px solid #ebeef5;
+    border-radius: 6px;
+    background: #fafbfc;
+    transition: background 0.2s;
+}
+
+.toolbox-item:hover {
+    background: #f0f3f8;
+}
+
+.toolbox-item-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 140px;
+}
+
+.toolbox-item-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #303133;
+}
+
+.toolbox-item-desc {
+    flex: 1;
+    font-size: 0.85rem;
+    color: #909399;
 }
 
 /* ==================== 历史命令 ==================== */

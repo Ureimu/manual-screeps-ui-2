@@ -49,30 +49,82 @@ function getRandStr(type: "number" | "string", length: number): string {
 }
 
 /**
+ * 判断是否为官方服务器
+ */
+function isOfficialServer(server: string): boolean {
+    return server === "screeps.com" || server === "screeps.com/ptr";
+}
+
+/**
+ * 服务器地址配置
+ */
+export interface ServerAddress {
+    host: string;
+    port: number;
+}
+
+/**
+ * 解析服务器字符串为地址配置
+ * - 官方服务器返回 null
+ * - 自定义服务器解析 host:port 格式
+ */
+export function parseServerAddress(server: string): ServerAddress | null {
+    if (isOfficialServer(server)) return null;
+    // 尝试解析 host:port 格式
+    const parts = server.split(":");
+    if (parts.length === 2) {
+        const host = parts[0]!.trim();
+        const port = parseInt(parts[1]!, 10);
+        if (host && !isNaN(port) && port > 0 && port <= 65535) {
+            return { host, port };
+        }
+    }
+    // 只有 host，默认端口 21025
+    if (parts.length === 1 && server.trim()) {
+        return { host: server.trim(), port: 21025 };
+    }
+    return null;
+}
+
+/**
  * 获取 Screeps WebSocket URL
- * @param server 服务器地址，如 "screeps.com" 或 "screeps.com/ptr"
+ * @param server 服务器地址，如 "screeps.com"、"screeps.com/ptr" 或 "127.0.0.1:21025"
  */
 export function getWebSocketUrl(server: string = "screeps.com"): string {
-    const rand3 = getRandStr("number", 3);
-    const rand8 = getRandStr("string", 8);
-
+    // 官方服务器
     if (server === "screeps.com/ptr") {
+        const rand3 = getRandStr("number", 3);
+        const rand8 = getRandStr("string", 8);
         return `wss://screeps.com/ptr/socket/${rand3}/${rand8}/websocket`;
     }
-    return `wss://screeps.com/socket/${rand3}/${rand8}/websocket`;
+    if (server === "screeps.com") {
+        const rand3 = getRandStr("number", 3);
+        const rand8 = getRandStr("string", 8);
+        return `wss://screeps.com/socket/${rand3}/${rand8}/websocket`;
+    }
+
+    // 自定义服务器：使用 ws://host:port/socket/websocket 格式
+    const addr = parseServerAddress(server);
+    if (addr) {
+        const protocol = addr.port === 443 ? "wss" : "ws";
+        return `${protocol}://${addr.host}:${addr.port}/socket/websocket`;
+    }
+
+    // 兜底：按自定义服务器处理
+    return `ws://${server}/socket/websocket`;
 }
 
 // ==================== REST API ====================
 
 /**
  * 当前服务器标识
- * 用于 REST API 请求的路径前缀
+ * 用于 REST API 请求
  */
 let currentServer = "screeps.com";
 
 /**
  * 设置当前服务器
- * @param server 服务器地址，如 "screeps.com" 或 "screeps.com/ptr"
+ * @param server 服务器地址，如 "screeps.com"、"screeps.com/ptr" 或 "127.0.0.1:21025"
  */
 export function setCurrentServer(server: string): void {
     currentServer = server;
@@ -95,14 +147,20 @@ async function apiRequest<T>(
     token: string,
     body?: unknown,
 ): Promise<{ data: T; newToken: string }> {
-    // 构建 API URL
-    // 开发模式: Vite proxy 将 /api/* 转发到 screeps.com
-    // 生产模式: 需要自建 proxy 或使用浏览器插件
-    const origin = window.location.origin;
-    const prefix = currentServer === "screeps.com/ptr" ? "/ptr" : "";
-    const url = `${prefix}/api${path}`;
-    // 使用相对路径，开发时由 Vite proxy 处理，生产时需额外配置
-    const fullUrl = `${origin}${url}`;
+    let fullUrl: string;
+
+    const addr = parseServerAddress(currentServer);
+    if (addr) {
+        // 自定义服务器：使用绝对 URL
+        const protocol = addr.port === 443 ? "https" : "http";
+        fullUrl = `${protocol}://${addr.host}:${addr.port}/api${path}`;
+    } else {
+        // 官方服务器：使用相对路径，开发时由 Vite proxy 处理
+        const origin = window.location.origin;
+        const prefix = currentServer === "screeps.com/ptr" ? "/ptr" : "";
+        const url = `${prefix}/api${path}`;
+        fullUrl = `${origin}${url}`;
+    }
 
     const headers: Record<string, string> = {
         "X-Token": token,
@@ -225,9 +283,17 @@ export async function sendConsoleCommand(cmd: string, shard: string, token: stri
 export async function getSessionToken(email: string, password: string): Promise<string> {
     try {
         // 登录不需要 X-Token
-        const origin = window.location.origin;
-        const prefix = currentServer === "screeps.com/ptr" ? "/ptr" : "";
-        const response = await fetch(`${origin}${prefix}/api/auth/signin`, {
+        let fullUrl: string;
+        const addr = parseServerAddress(currentServer);
+        if (addr) {
+            const protocol = addr.port === 443 ? "https" : "http";
+            fullUrl = `${protocol}://${addr.host}:${addr.port}/api/auth/signin`;
+        } else {
+            const origin = window.location.origin;
+            const prefix = currentServer === "screeps.com/ptr" ? "/ptr" : "";
+            fullUrl = `${origin}${prefix}/api/auth/signin`;
+        }
+        const response = await fetch(fullUrl, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email, password }),
