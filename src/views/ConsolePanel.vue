@@ -256,7 +256,7 @@
                                 label-width="60px"
                                 @submit.prevent="handleSendCommand"
                             >
-                                <el-form-item label="分片">
+                                <el-form-item v-if="!isCustomServer" label="分片">
                                     <el-select v-model="commandForm.shard" placeholder="选择分片">
                                         <el-option
                                             v-for="s in availableShards"
@@ -373,8 +373,11 @@ import {
     getSessionToken,
     initWebSocket,
     authSessionToken,
+    authSessionTokenPrivate,
     subscribeConsole,
+    subscribeConsolePrivate,
     parseMessage,
+    parseServerAddress,
     sendConsoleCommand,
     closeWebSocket as apiCloseWs,
     setCurrentServer,
@@ -660,10 +663,6 @@ const toolboxCommands = ref<ToolboxCommand[]>([
 ]);
 
 function executeToolboxCommand(cmd: ToolboxCommand): void {
-    // 自动选择一个分片
-    if (!commandForm.value.shard && availableShards.value.length > 0) {
-        commandForm.value.shard = availableShards.value[0]!;
-    }
     // 填充命令表达式，复用 handleSendCommand 的发送/历史/错误处理
     commandForm.value.expression = cmd.expression;
     handleSendCommand();
@@ -905,47 +904,68 @@ async function handleConnect(): Promise<void> {
 
         // ===== step 3: 设置消息处理器（认证前就位，确保不丢任何消息）=====
         addDebugLog("info", "步骤3: 设置消息处理器...");
-        addDebugLog("info", "步骤3: 设置消息处理器...");
         let msgCount = 0;
         ws.onmessage = (event: MessageEvent) => {
             const raw = event.data as string;
             msgCount++;
             addDebugLog("info", `[WS消息 #${msgCount}] 原始长度=${raw.length}，首字符="${raw[0]}"`);
 
-            addDebugLog("info", `[WS消息 #${msgCount} 原文] ${raw}`);
+            addDebugLog("info", `[WS消息 #${msgCount}] 原文] ${raw}`);
 
-            // 使用 parseMessage 解码（去掉首字符类型标记，解析 JSON）
-            let parsed;
-            try {
-                parsed = parseMessage(raw);
-                addDebugLog(
-                    "info",
-                    `[WS消息 #${msgCount}] parseMessage 结果: length=${parsed.length}`,
-                );
-
-                // 处理双重编码: 实际格式为 m[["channel", data]] 而非 m["channel", data]
-                // parsed[0] 才是真正的 [channel, data] 数组
-                if (parsed.length === 1 && Array.isArray(parsed[0]) && parsed[0].length >= 2) {
-                    addDebugLog("info", `[WS消息 #${msgCount}] 检测到外层数组包装，自动展开`);
-                    parsed = parsed[0];
-                    addDebugLog("info", `[WS消息 #${msgCount}] 展开后 length=${parsed.length}`);
+            // 私有服：消息为纯 JSON 数组 [channel, payload]
+            // 官方服：消息为 a/m 前缀的 JSON，需 parseMessage 解码
+            let parsed: unknown[];
+            if (isCustomServer.value) {
+                // 私有服控制台消息为 JSON 数组 [channel, payload]
+                if (raw.startsWith("[") || raw.startsWith("{")) {
+                    try {
+                        parsed = JSON.parse(raw);
+                        if (!Array.isArray(parsed)) parsed = [parsed];
+                        addDebugLog(
+                            "info",
+                            `[WS消息 #${msgCount}] 私有服 JSON: length=${parsed.length}`,
+                        );
+                    } catch {
+                        addDebugLog("warn", `[WS消息 #${msgCount}] 私有服 JSON 解析失败`);
+                        return;
+                    }
+                } else {
+                    // 非 JSON 消息（如心跳等）：已在调试日志中可见，跳过解析
+                    addDebugLog("info", `[WS消息 #${msgCount}] 私有服非 JSON，已记录`);
+                    return;
                 }
-
-                if (parsed.length > 0) {
+            } else {
+                // 官方服：使用 parseMessage 解码（去掉首字符类型标记，解析 JSON）
+                try {
+                    parsed = parseMessage(raw);
                     addDebugLog(
                         "info",
-                        `[WS消息 #${msgCount}] parsed[0]="${String(parsed[0]).substring(0, 100)}"`,
+                        `[WS消息 #${msgCount}] parseMessage 结果: length=${parsed.length}`,
                     );
+
+                    // 处理双重编码: 实际格式为 m[["channel", data]] 而非 m["channel", data]
+                    if (parsed.length === 1 && Array.isArray(parsed[0]) && parsed[0].length >= 2) {
+                        addDebugLog("info", `[WS消息 #${msgCount}] 检测到外层数组包装，自动展开`);
+                        parsed = parsed[0];
+                        addDebugLog("info", `[WS消息 #${msgCount}] 展开后 length=${parsed.length}`);
+                    }
+
+                    if (parsed.length > 0) {
+                        addDebugLog(
+                            "info",
+                            `[WS消息 #${msgCount}] parsed[0]="${String(parsed[0]).substring(0, 100)}"`,
+                        );
+                    }
+                    if (parsed.length > 1) {
+                        addDebugLog(
+                            "info",
+                            `[WS消息 #${msgCount}] parsed[1]=${JSON.stringify(parsed[1]).substring(0, 200)}`,
+                        );
+                    }
+                } catch (e) {
+                    addDebugLog("error", `[WS消息 #${msgCount}] parseMessage 异常: ${e}`);
+                    parsed = [""];
                 }
-                if (parsed.length > 1) {
-                    addDebugLog(
-                        "info",
-                        `[WS消息 #${msgCount}] parsed[1]=${JSON.stringify(parsed[1]).substring(0, 200)}`,
-                    );
-                }
-            } catch (e) {
-                addDebugLog("error", `[WS消息 #${msgCount}] parseMessage 异常: ${e}`);
-                parsed = [""];
             }
 
             if (!parsed || parsed.length < 2) {
@@ -1020,28 +1040,46 @@ async function handleConnect(): Promise<void> {
             }
         };
 
-        // ===== step 4: 发送认证（authSessionToken 使用 addEventListener，不覆盖 onmessage）=====
-        addDebugLog("info", "步骤4: 发送认证...");
-        await authSessionToken(ws, playerInfo.sessionToken);
-        addDebugLog("success", "WebSocket 认证通过");
+        // ===== step 4: 发送认证 =====
+        if (isCustomServer.value) {
+            addDebugLog("info", "步骤4: 私有服认证...");
+            const newToken = await authSessionTokenPrivate(ws, playerInfo.sessionToken);
+            playerInfo.sessionToken = newToken;
+            addDebugLog("success", "私有服认证通过");
+        } else {
+            addDebugLog("info", "步骤4: 发送认证...");
+            await authSessionToken(ws, playerInfo.sessionToken);
+            addDebugLog("success", "WebSocket 认证通过");
+        }
 
         // ===== step 5: 订阅控制台 =====
-        addDebugLog("info", "步骤5: 订阅控制台...");
-        await subscribeConsole(ws, playerInfo.userId);
-        addDebugLog("success", "已订阅控制台");
+        if (isCustomServer.value) {
+            addDebugLog("info", "步骤5: 私有服订阅控制台...");
+            subscribeConsolePrivate(ws, playerInfo.userId);
+            addDebugLog("success", "私有服已订阅控制台");
+        } else {
+            addDebugLog("info", "步骤5: 订阅控制台...");
+            await subscribeConsole(ws, playerInfo.userId);
+            addDebugLog("success", "已订阅控制台");
+        }
 
         // ===== step 6: 获取用户可用分片列表 =====
-        try {
-            addDebugLog("info", "步骤6: 获取用户可用分片列表...");
-            const shards = await getUserShards(token);
-            availableShards.value = shards;
-            addDebugLog("success", `获取到 ${shards.length} 个分片: ${shards.join(", ")}`);
-            if (shards.length > 0) {
-                commandForm.value.shard = shards[0] as string;
+        if (isCustomServer.value) {
+            // 私有服务器不使用分片参数
+            addDebugLog("info", "步骤6: 私有服务器，跳过获取分片");
+        } else {
+            try {
+                addDebugLog("info", "步骤6: 获取用户可用分片列表...");
+                const shards = await getUserShards(token);
+                availableShards.value = shards;
+                addDebugLog("success", `获取到 ${shards.length} 个分片: ${shards.join(", ")}`);
+                if (shards.length > 0) {
+                    commandForm.value.shard = shards[0] as string;
+                }
+            } catch (err) {
+                const msg = err instanceof Error ? err.message : "获取分片失败";
+                addDebugLog("warn", `获取分片列表失败: ${msg}`);
             }
-        } catch (err) {
-            const msg = err instanceof Error ? err.message : "获取分片失败";
-            addDebugLog("warn", `获取分片列表失败: ${msg}`);
         }
 
         wsConnected.value = true;
@@ -1080,25 +1118,31 @@ function handleClearToken(): void {
 
 // ==================== 发送命令 ====================
 
+// 是否为自定义服务器（供多处使用）
+const isCustomServer = computed(() => !!parseServerAddress(resolveServer()));
+
 async function handleSendCommand(): Promise<void> {
     const expression = commandForm.value.expression.trim();
     const shard = commandForm.value.shard;
 
-    if (!expression || !shard) return;
+    if (!expression) return;
+    if (!isCustomServer.value && !shard) return;
     if (!ws || !wsConnected.value) {
         ElMessage.error("WebSocket 未连接");
         return;
     }
 
+    const displayShard = shard || "-";
+
     // 在控制台显示发送的命令
-    addConsoleMessage("result", `[${shard}] > ${expression}`);
+    addConsoleMessage("result", `[${displayShard}] > ${expression}`);
 
     const token = loginForm.value.token.trim();
     sendingCommand.value = true;
-    addDebugLog("info", `发送命令 [${shard}]: ${expression.substring(0, 80)}...`);
+    addDebugLog("info", `发送命令 [${displayShard}]: ${expression.substring(0, 80)}...`);
 
     try {
-        await sendConsoleCommand(expression, shard, token);
+        await sendConsoleCommand(expression, isCustomServer.value ? null : shard, token);
 
         // 合并相同历史命令：删除旧条目，将新条目移到顶部
         const existingIdx = commandHistory.value.findIndex(
@@ -1107,7 +1151,7 @@ async function handleSendCommand(): Promise<void> {
         if (existingIdx !== -1) {
             commandHistory.value.splice(existingIdx, 1);
         }
-        commandHistory.value.unshift({ expression, shard, time: formatTime() });
+        commandHistory.value.unshift({ expression, shard: displayShard, time: formatTime() });
         if (commandHistory.value.length > 100)
             commandHistory.value = commandHistory.value.slice(0, 100);
         saveHistory();

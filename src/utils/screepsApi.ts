@@ -150,10 +150,16 @@ async function apiRequest<T>(
     let fullUrl: string;
 
     const addr = parseServerAddress(currentServer);
+    const headers: Record<string, string> = {
+        "X-Token": token,
+        "X-Username": token,
+    };
+
     if (addr) {
-        // 自定义服务器：使用绝对 URL
-        const protocol = addr.port === 443 ? "https" : "http";
-        fullUrl = `${protocol}://${addr.host}:${addr.port}/api${path}`;
+        // 自定义服务器：通过 Vite 代理 /custom-api 转发，避免 CORS
+        fullUrl = `${window.location.origin}/custom-api/api${path}`;
+        headers["X-Custom-Host"] = addr.host;
+        headers["X-Custom-Port"] = String(addr.port);
     } else {
         // 官方服务器：使用相对路径，开发时由 Vite proxy 处理
         const origin = window.location.origin;
@@ -161,11 +167,6 @@ async function apiRequest<T>(
         const url = `${prefix}/api${path}`;
         fullUrl = `${origin}${url}`;
     }
-
-    const headers: Record<string, string> = {
-        "X-Token": token,
-        "X-Username": token,
-    };
 
     const options: RequestInit = { method, headers };
 
@@ -258,12 +259,17 @@ export async function getUserShards(token: string): Promise<string[]> {
  * @param shard 目标分片
  * @param token SESSION_TOKEN
  */
-export async function sendConsoleCommand(cmd: string, shard: string, token: string): Promise<void> {
+export async function sendConsoleCommand(
+    cmd: string,
+    shard: string | null,
+    token: string,
+): Promise<void> {
     try {
-        const { data } = await apiRequest<{ ok: number }>("POST", "/user/console", token, {
-            expression: cmd,
-            shard,
-        });
+        const body: { expression: string; shard?: string } = { expression: cmd };
+        if (shard) {
+            body.shard = shard;
+        }
+        const { data } = await apiRequest<{ ok: number }>("POST", "/user/console", token, body);
 
         if (data.ok !== 1) {
             throw new Error("服务器返回失败");
@@ -284,10 +290,15 @@ export async function getSessionToken(email: string, password: string): Promise<
     try {
         // 登录不需要 X-Token
         let fullUrl: string;
+        const reqHeaders: Record<string, string> = {
+            "Content-Type": "application/json",
+        };
         const addr = parseServerAddress(currentServer);
         if (addr) {
-            const protocol = addr.port === 443 ? "https" : "http";
-            fullUrl = `${protocol}://${addr.host}:${addr.port}/api/auth/signin`;
+            // 自定义服务器：通过 Vite 代理 /custom-api 转发，避免 CORS
+            fullUrl = `${window.location.origin}/custom-api/api/auth/signin`;
+            reqHeaders["X-Custom-Host"] = addr.host;
+            reqHeaders["X-Custom-Port"] = String(addr.port);
         } else {
             const origin = window.location.origin;
             const prefix = currentServer === "screeps.com/ptr" ? "/ptr" : "";
@@ -295,7 +306,7 @@ export async function getSessionToken(email: string, password: string): Promise<
         }
         const response = await fetch(fullUrl, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: reqHeaders,
             body: JSON.stringify({ email, password }),
         });
 
@@ -461,6 +472,44 @@ export function parseMessage(message: string): unknown[] {
     } catch {
         return [""];
     }
+}
+
+/**
+ * 私有服务器 WebSocket 认证
+ *
+ * 协议：发送 "auth <token>"，监听以 "auth ok" 开头的响应。
+ * 与官方服不同：纯文本行，无 JSON 编码，无 a/m 前缀。
+ */
+export function authSessionTokenPrivate(ws: WebSocket, sessionToken: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+        ws.send(`auth ${sessionToken}`);
+
+        const handler = (e: MessageEvent) => {
+            const raw = e.data as string;
+
+            if (raw.startsWith("auth ok")) {
+                const newToken = raw.substring("auth ok".length).trim() || sessionToken;
+                console.log("[screepsApi] 私有服认证成功");
+                ws.removeEventListener("message", handler);
+                resolve(newToken);
+            } else if (raw.startsWith("auth failed")) {
+                console.error("[screepsApi] 私有服认证失败");
+                ws.removeEventListener("message", handler);
+                reject(new Error("私有服 Token 认证失败"));
+            }
+        };
+        ws.addEventListener("message", handler);
+    });
+}
+
+/**
+ * 私有服务器 WebSocket 订阅控制台
+ *
+ * 协议：发送 "subscribe user:<userId>/console"。
+ */
+export function subscribeConsolePrivate(ws: WebSocket, userId: string): void {
+    ws.send(`subscribe user:${userId}/console`);
+    console.log("[screepsApi] 私有服已订阅控制台");
 }
 
 /**
