@@ -236,22 +236,46 @@
                 </div>
                 <div ref="energyDeltaRef" class="section-anchor">
                     <el-row
-                        v-if="currentRoomName && energyDeltaByProjectData.length > 0"
+                        v-if="currentRoomName && energyDeltaProjects.length > 0"
                         :gutter="24"
                         class="row-container chart-row"
                     >
                         <el-col :xs="24" :sm="24" :md="24" :lg="24">
                             <div class="chart-wrapper">
+                                <div class="project-selector">
+                                    <span class="selector-label">选择项目：</span>
+                                    <el-select
+                                        v-model="selectedEnergyDeltaProject"
+                                        placeholder="请选择项目"
+                                        style="width: 240px"
+                                    >
+                                        <el-option
+                                            v-for="project in energyDeltaProjects"
+                                            :key="project"
+                                            :label="project"
+                                            :value="project"
+                                        />
+                                    </el-select>
+                                </div>
                                 <ComparableLineChart
+                                    v-if="
+                                        selectedEnergyDeltaProject &&
+                                        energyDeltaByCreepData.length > 0
+                                    "
+                                    :key="'energy-delta-' + selectedEnergyDeltaProject"
                                     id="energy-delta-chart"
-                                    name="项目能量净收益对比"
+                                    :name="`项目能量净收益 - ${selectedEnergyDeltaProject}`"
                                     :timeData="screepsData.timeSeriesData?.timeStamp?.data"
                                     :gameTimeData="screepsData.timeSeriesData?.gameTime?.data"
-                                    :yDataList="energyDeltaByProjectData"
+                                    :yDataList="energyDeltaByCreepData"
                                     :mode="'sum'"
                                     :interval="1500"
                                     :aggregateAxis="'tick'"
                                     :visible="true"
+                                />
+                                <el-empty
+                                    v-else-if="selectedEnergyDeltaProject"
+                                    description="该项目暂无爬虫数据"
                                 />
                             </div>
                         </el-col>
@@ -386,30 +410,62 @@ const outwardsSourceData = computed(() => {
     }));
 });
 
-// 获取项目能量净收益数据
-// 公式: energyDeltaByProject = storage能量交换 - spawn能量消耗
-const energyDeltaByProjectData = computed(() => {
+// 获取 energyDeltaByProjectByCreep 中的所有项目名称列表
+const energyDeltaProjects = computed(() => {
     if (!screepsData.value?.timeSeriesData || !currentRoomName.value) return [];
     const roomData = screepsData.value.timeSeriesData.roomData?.[currentRoomName.value];
-    if (!roomData?.storageData?.energyDeltaByProject) return [];
+    if (!roomData?.storageData?.energyDeltaByProjectByCreep) return [];
+    return Object.keys(roomData.storageData.energyDeltaByProjectByCreep);
+});
 
-    const spawnEnergyData = roomData.spawnEnergy ?? {};
+// 当前选中的项目（默认选择第一个）
+const selectedEnergyDeltaProject = computed({
+    get: () => {
+        if (energyDeltaProjects.value.length === 0) return null;
+        // 使用内部 ref 保存用户手动选择的值
+        return _selectedEnergyDeltaProject.value ?? energyDeltaProjects.value[0] ?? null;
+    },
+    set: (val) => {
+        _selectedEnergyDeltaProject.value = val;
+    },
+});
+const _selectedEnergyDeltaProject = ref<string | null>(null);
 
-    return Object.entries(roomData.storageData.energyDeltaByProject).map(([name, storageDelta]) => {
+// 获取选中项目的每个爬虫的能量净收益数据
+// 公式: energyDeltaByCreep = storage能量交换(per creep) - spawn能量消耗(per project / creep count)
+const energyDeltaByCreepData = computed(() => {
+    if (
+        !screepsData.value?.timeSeriesData ||
+        !currentRoomName.value ||
+        !selectedEnergyDeltaProject.value
+    )
+        return [];
+    const roomData = screepsData.value.timeSeriesData.roomData?.[currentRoomName.value];
+    if (!roomData?.storageData?.energyDeltaByProjectByCreep) return [];
+
+    const projectData =
+        roomData.storageData.energyDeltaByProjectByCreep[selectedEnergyDeltaProject.value];
+    if (!projectData) return [];
+
+    const creepEntries = Object.entries(projectData);
+    const creepCount = creepEntries.length;
+
+    // 获取该项目的 spawnEnergy
+    const spawnEnergyData = roomData.spawnEnergy?.[selectedEnergyDeltaProject.value];
+    const spawnArr = Array.isArray(spawnEnergyData?.data) ? spawnEnergyData.data : [];
+
+    return creepEntries.map(([creepName, storageDelta]) => {
         const storageArr = Array.isArray(storageDelta.data) ? storageDelta.data : [];
-        const spawnArr = Array.isArray(spawnEnergyData[name]?.data)
-            ? (spawnEnergyData[name] as typeof storageDelta).data
-            : [];
 
         const resultData = storageArr.map((storageVal, index) => {
-            const spawnVal = spawnArr[index] ?? 0;
             if (storageVal === null) return null;
-            if (spawnVal === null) return storageVal;
+            // 将 spawnEnergy 平均分摊到每个 creep
+            const spawnVal = creepCount > 0 ? (spawnArr[index] ?? 0) / creepCount : 0;
             return storageVal - spawnVal;
         });
 
         return {
-            name,
+            name: creepName,
             data: resultData,
         };
     });
@@ -528,5 +584,21 @@ const labTaskHistoryData = computed(() => {
 :deep(.el-col) {
     display: flex;
     flex-direction: column;
+}
+
+.project-selector {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: #fafbfc;
+    border-bottom: 1px solid #e1e8ed;
+}
+
+.selector-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #303133;
+    white-space: nowrap;
 }
 </style>

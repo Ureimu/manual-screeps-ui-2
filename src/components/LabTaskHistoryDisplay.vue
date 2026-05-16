@@ -50,10 +50,16 @@
                         </template>
                     </el-table-column>
 
-                    <el-table-column prop="status" label="状态" width="100" sortable>
+                    <el-table-column
+                        prop="taskStatus"
+                        label="任务状态"
+                        width="100"
+                        sortable
+                        :sort-method="sortByTaskStatus"
+                    >
                         <template #default="{ row }">
-                            <el-tag :type="getStatusTagType(row.status)" size="small">
-                                {{ getStatusText(row.status) }}
+                            <el-tag :type="getTaskStatusTagType(row)" size="small" effect="dark">
+                                {{ getTaskStatusText(row) }}
                             </el-tag>
                         </template>
                     </el-table-column>
@@ -76,6 +82,20 @@
                         <template #default="{ row }">
                             <span v-if="row.endTick === -1" class="unfinished-tick">未完成</span>
                             <span v-else>{{ formatTick(row.endTick) }}</span>
+                        </template>
+                    </el-table-column>
+
+                    <el-table-column
+                        label="持续时间"
+                        width="100"
+                        sortable
+                        :sort-method="sortByDuration"
+                    >
+                        <template #default="{ row }">
+                            <span v-if="row.endTick === -1" class="unfinished-duration"
+                                >进行中</span
+                            >
+                            <span v-else>{{ calculateDuration(row.startTick, row.endTick) }}</span>
                         </template>
                     </el-table-column>
 
@@ -156,11 +176,6 @@
                             <el-descriptions-item label="任务类型">
                                 <el-tag :type="getTaskTypeTagType(selectedTask.type)" size="small">
                                     {{ getTaskTypeText(selectedTask.type) }}
-                                </el-tag>
-                            </el-descriptions-item>
-                            <el-descriptions-item label="状态">
-                                <el-tag :type="getStatusTagType(selectedTask.status)" size="small">
-                                    {{ getStatusText(selectedTask.status) }}
                                 </el-tag>
                             </el-descriptions-item>
                             <el-descriptions-item label="优先级">
@@ -453,28 +468,35 @@ const getTaskTypeText = (type: string): string => {
     }
 };
 
-// 获取状态标签样式
-const getStatusTagType = (status: string): string => {
-    switch (status) {
-        case "ready":
-            return "info";
-        case "running":
-            return "warning";
-        default:
-            return "";
-    }
+// 获取任务状态标签样式
+const getTaskStatusTagType = (task: LabTaskHistory): string => {
+    if (task.isFailed) return "danger";
+    if (task.endTick === -1) return "warning";
+    return "success";
 };
 
-// 获取状态文本
-const getStatusText = (status: string): string => {
-    switch (status) {
-        case "ready":
-            return "准备中";
-        case "running":
-            return "进行中";
-        default:
-            return status;
-    }
+// 获取任务状态文本
+const getTaskStatusText = (task: LabTaskHistory): string => {
+    if (task.isFailed) return "失败";
+    if (task.endTick === -1) return "未完成";
+    return "成功";
+};
+
+// 获取任务状态排序值（用于表格排序）
+const getTaskStatusSortValue = (task: LabTaskHistory): number => {
+    if (task.isFailed) return 3;
+    if (task.endTick === -1) return 1;
+    return 2;
+};
+
+// 表格任务状态排序方法
+const sortByTaskStatus = (a: LabTaskHistory, b: LabTaskHistory): number => {
+    return getTaskStatusSortValue(a) - getTaskStatusSortValue(b);
+};
+
+// 表格持续时间排序方法
+const sortByDuration = (a: LabTaskHistory, b: LabTaskHistory): number => {
+    return a.endTick - a.startTick - (b.endTick - b.startTick);
 };
 
 // 获取优先级样式类

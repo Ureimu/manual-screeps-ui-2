@@ -119,8 +119,10 @@ export type TimeSeriesStats<T extends string | number | (number | null)[]> = {
             controllerProgress: SingleData<T>;
             storageData: {
                 energy: SingleData<T>;
-                energyDeltaByProject: {
-                    [projectName: string]: SingleData<T>;
+                energyDeltaByProjectByCreep: {
+                    [projectName: string]: {
+                        [creepName: string]: SingleData<T>;
+                    };
                 };
             };
             outwardsSourceEnergy: {

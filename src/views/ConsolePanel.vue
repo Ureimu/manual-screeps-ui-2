@@ -660,6 +660,12 @@ const toolboxCommands = ref<ToolboxCommand[]>([
         description: "更新当前 shard 的数据到 UI 面板",
         expression: "uiDataDownload",
     },
+    {
+        id: "clearStatsEngineData",
+        label: "清除统计数据",
+        description: "清除游戏端 segment 中的时间序列统计数据",
+        expression: "aiu.clearStatsEngineData()",
+    },
 ]);
 
 function executeToolboxCommand(cmd: ToolboxCommand): void {
